@@ -306,6 +306,44 @@
             margin-top: 4px;
         }
 
+        /* منوی navigation */
+        .nav-menu {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-right: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 0 8px;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-menu a:nth-child(1) { background: rgba(0,102,255,0.3); }
+        .nav-menu a:nth-child(2) { background: rgba(255,107,53,0.3); }
+        .nav-menu a:nth-child(3) { background: rgba(0,212,170,0.3); }
+        .nav-menu a:nth-child(4) { background: rgba(148,163,184,0.3); }
+
+        .nav-menu a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .nav-text {
+            display: inline;
+        }
+
         .wallet-section {
             display: flex;
             flex-direction: column;
@@ -935,6 +973,11 @@
                 padding: 20px 0;
             }
             
+            .nav-menu {
+                flex-direction: row;
+                margin-right: 0;
+            }
+            
             .wallet-section {
                 flex-direction: row;
                 width: auto;
@@ -981,6 +1024,19 @@
             
             .reward-card {
                 flex-direction: row;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-text {
+                display: none;
+            }
+            .nav-menu {
+                gap: 5px;
+            }
+            .nav-menu a {
+                padding: 5px 8px;
+                font-size: 11px;
             }
         }
 
@@ -1048,6 +1104,26 @@
                     <div class="logo-subtitle">استخراج هوشمند • پاداش واقعی</div>
                 </div>
             </a>
+
+            <!-- منوی navigation -->
+            <div class="nav-menu">
+                <a href="dashboard.html">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="nav-text">داشبورد</span>
+                </a>
+                <a href="leaderboard.html">
+                    <i class="fas fa-trophy"></i>
+                    <span class="nav-text">لیدربرد</span>
+                </a>
+                <a href="missions.html">
+                    <i class="fas fa-tasks"></i>
+                    <span class="nav-text">مأموریت‌ها</span>
+                </a>
+                <a href="admin.html">
+                    <i class="fas fa-user-shield"></i>
+                    <span class="nav-text">مدیریت</span>
+                </a>
+            </div>
 
             <div class="wallet-section">
                 <div class="wallet-row">
