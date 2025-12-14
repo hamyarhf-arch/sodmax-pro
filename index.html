@@ -1978,6 +1978,27 @@
         console.log('💰 ۴ پنل ویژه فروش SOD اضافه شد');
         console.log('⛏️ سیستم ثبت نام و استخراج کامل');
         console.log('💎 نرخ تبدیل: 10,000,000 SOD = 0.01 USDT');
+
+        // ========== سیستم مدیریت ادمین ==========
+const ADMIN_EMAILS = ["hamyarhf@gmail.com"];
+
+function setupAdminAccess() {
+    const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+    const navMenu = document.querySelector('.nav-menu');
+    
+    if (ADMIN_EMAILS.includes(userData.email)) {
+        const adminLink = document.createElement('a');
+        adminLink.href = "admin.html";
+        adminLink.innerHTML = '<i class="fas fa-user-shield"></i><span class="nav-text">مدیریت</span>';
+        adminLink.style.background = 'rgba(148,163,184,0.3)';
+        navMenu.appendChild(adminLink);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(setupAdminAccess, 1000);
+});
     </script>
 </body>
 </html>
+
