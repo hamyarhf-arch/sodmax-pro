@@ -3,321 +3,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پنل مدیریت SODmAX</title>
+    <title>پنل مدیریت SODmAX Pro</title>
     <style>
-        * { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #0a0f1c; color: white; padding: 20px; min-height: 100vh; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        h1 { color: #0066ff; text-align: center; margin-bottom: 30px; }
-        .panel { background: rgba(18,24,40,0.9); border-radius: 15px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-box { background: linear-gradient(135deg, #0066FF 0%, #00D4AA 100%); padding: 20px; border-radius: 12px; }
-        .stat-box h3 { margin: 0 0 10px 0; font-size: 16px; opacity: 0.9; }
-        .stat-box p { margin: 0; font-size: 28px; font-weight: bold; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #0A0F1C; color: white; min-height: 100vh; }
         
-        .controls { display: flex; gap: 15px; margin: 25px 0; flex-wrap: wrap; }
-        .btn { background: #0066FF; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn:hover { background: #0052CC; transform: translateY(-2px); }
-        .btn-success { background: #00D4AA; }
-        .btn-success:hover { background: #00B894; }
-        .btn-danger { background: #FF6B35; }
-        .btn-danger:hover { background: #FF5722; }
+        .access-denied {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0A0F1C;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
         
-        .search-box { flex: 1; min-width: 300px; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-size: 16px; }
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5,9,20,0.98);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: rgba(0,102,255,0.3); padding: 16px; text-align: right; border-bottom: 2px solid #0066FF; }
-        td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        tr:hover { background: rgba(0,102,255,0.1); }
+        .login-box {
+            background: rgba(255,255,255,0.05);
+            padding: 40px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
         
-        .message { padding: 15px; border-radius: 8px; margin: 20px 0; display: none; }
-        .message.success { background: rgba(0,212,170,0.1); border: 1px solid #00D4AA; display: block; }
-        .message.error { background: rgba(255,107,53,0.1); border: 1px solid #FF6B35; display: block; }
+        .login-title {
+            color: #0066FF;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
         
-        .loading { text-align: center; padding: 40px; color: #94A3B8; }
-        .empty-state { text-align: center; padding: 60px; color: #94A3B8; }
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #0066FF;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .error-msg {
+            color: #FF6B35;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .admin-container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .admin-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0066FF;
+        }
+        
+        .logout-btn {
+            background: rgba(255,107,53,0.2);
+            color: #FF6B35;
+            border: 1px solid #FF6B35;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .stat-card h3 {
+            color: #00D4AA;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 30px;
+        }
+        
+        th {
+            background: rgba(0,102,255,0.3);
+            padding: 20px;
+            text-align: right;
+        }
+        
+        td {
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        tr:hover {
+            background: rgba(0,102,255,0.1);
+        }
         
         @media (max-width: 768px) {
-            .container { padding: 10px; }
-            .panel { padding: 20px; }
-            .controls { flex-direction: column; }
-            .search-box { min-width: 100%; }
+            .stats-grid { grid-template-columns: 1fr; }
             table { font-size: 14px; }
-            th, td { padding: 10px; }
+            th, td { padding: 12px 10px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚀 پنل مدیریت SODmAX Pro</h1>
+    <div id="accessDenied" class="access-denied" style="display: none;">
+        <div>
+            <div style="font-size: 80px; margin-bottom: 20px;">🚫</div>
+            <h1>دسترسی ممنوع</h1>
+            <p style="color: #94A3B8; font-size: 18px; margin-bottom: 30px;">
+                شما اجازه دسترسی به پنل مدیریت را ندارید.
+            </p>
+            <button onclick="window.location.href='/'" style="background: #0066FF; color: white; border: none; padding: 15px 40px; border-radius: 10px; font-size: 16px; cursor: pointer;">
+                بازگشت به بازی
+            </button>
+        </div>
+    </div>
+    
+    <div id="adminLogin" class="login-container" style="display: none;">
+        <div class="login-box">
+            <h1 class="login-title">🔐 ورود به پنل مدیریت</h1>
+            
+            <input type="email" id="adminEmail" class="input-field" placeholder="ایمیل مدیر" value="hamyarhf@gmail.com">
+            <input type="password" id="adminPassword" class="input-field" placeholder="رمز عبور">
+            
+            <button class="login-btn" onclick="checkAdminLogin()">ورود به پنل</button>
+            
+            <div id="loginError" class="error-msg">❌ اطلاعات وارد شده صحیح نیست</div>
+        </div>
+    </div>
+    
+    <div id="adminPanel" class="admin-container" style="display: none;">
+        <div class="admin-header">
+            <h1 class="admin-title">👑 پنل مدیریت SODmAX</h1>
+            <button class="logout-btn" onclick="adminLogout()">🚪 خروج</button>
+        </div>
         
-        <div class="panel">
-            <div class="stats">
-                <div class="stat-box">
-                    <h3>👥 تعداد کاربران</h3>
-                    <p id="totalUsers">0</p>
-                </div>
-                <div class="stat-box">
-                    <h3>⛏️ کل استخراج</h3>
-                    <p id="totalMined">0 SOD</p>
-                </div>
-                <div class="stat-box">
-                    <h3>💰 کل USDT</h3>
-                    <p id="totalUSDT">0 USDT</p>
-                </div>
-                <div class="stat-box">
-                    <h3>📊 میانگین سطح</h3>
-                    <p id="avgLevel">1</p>
-                </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>👥 کاربران فعال</h3>
+                <div class="stat-value" id="activeUsers">۰</div>
+                <p style="color: #94A3B8;">کاربران ثبت‌نام کرده</p>
             </div>
             
-            <div class="controls">
-                <button class="btn" onclick="loadDemoUsers()">
-                    <span>👁️ مشاهده دمو</span>
-                </button>
-                <button class="btn btn-success" onclick="checkLocalStorage()">
-                    <span>💾 بارگذاری از حافظه</span>
-                </button>
-                <input type="text" class="search-box" placeholder="جستجو در بین کاربران..." id="searchInput">
+            <div class="stat-card">
+                <h3>⛏️ کل استخراج</h3>
+                <div class="stat-value" id="totalMined">۰ SOD</div>
+                <p style="color: #94A3B8;">مجموع SOD استخراج شده</p>
             </div>
             
-            <div id="message" class="message"></div>
-            
-            <div id="tableContainer">
-                <div id="loading" class="loading">
-                    <p>📡 در حال بارگذاری اطلاعات...</p>
-                </div>
-                
-                <div id="emptyState" class="empty-state" style="display: none;">
-                    <h3>👻 کاربری پیدا نشد!</h3>
-                    <p>اول کاربران در بازی ثبت نام کنند.</p>
-                    <button class="btn" onclick="loadDemoUsers()">مشاهده داده دمو</button>
-                </div>
-                
-                <table id="usersTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>نام کاربر</th>
-                            <th>ایمیل</th>
-                            <th>SOD</th>
-                            <th>USDT</th>
-                            <th>استخراج کل</th>
-                            <th>سطح</th>
-                            <th>تاریخ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTableBody">
-                        <!-- کاربران اینجا نمایش داده می‌شوند -->
-                    </tbody>
-                </table>
+            <div class="stat-card">
+                <h3>💰 کل USDT</h3>
+                <div class="stat-value" id="totalUSDT">۰ USDT</div>
+                <p style="color: #94A3B8;">مجموع پاداش‌های پرداخت شده</p>
             </div>
+        </div>
+        
+        <div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>نام کاربر</th>
+                        <th>ایمیل</th>
+                        <th>SOD</th>
+                        <th>USDT</th>
+                        <th>سطح</th>
+                        <th>تاریخ ثبت‌نام</th>
+                    </tr>
+                </thead>
+                <tbody id="usersList">
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        // داده‌های دمو برای تست
-        const demoUsers = [
-            {
-                fullName: "علی محمدی",
-                email: "ali@example.com",
-                sodBalance: 12500000,
-                usdtBalance: 0.0125,
-                totalMined: 12500000,
-                userLevel: 3,
-                lastUpdated: "۱۴۰۲/۱۲/۱۵"
-            },
-            {
-                fullName: "فاطمه کریمی",
-                email: "fatemeh@example.com",
-                sodBalance: 8500000,
-                usdtBalance: 0.0085,
-                totalMined: 8500000,
-                userLevel: 2,
-                lastUpdated: "۱۴۰۲/۱۲/۱۴"
-            },
-            {
-                fullName: "محمد رضایی",
-                email: "mohammad@example.com",
-                sodBalance: 21000000,
-                usdtBalance: 0.0210,
-                totalMined: 21000000,
-                userLevel: 4,
-                lastUpdated: "۱۴۰۲/۱۲/۱۶"
-            }
-        ];
+        const ADMIN_SETTINGS = {
+            allowedEmail: "hamyarhf@gmail.com",
+            password: "123456",
+            autoLogoutMinutes: 60
+        };
         
-        // نمایش کاربران دمو
-        function loadDemoUsers() {
-            displayUsers(demoUsers);
-            showMessage('✅ داده‌های دمو نمایش داده شدند. برای داده واقعی از "بارگذاری از حافظه" استفاده کنید.', 'success');
-        }
-        
-        // بررسی localStorage
-        function checkLocalStorage() {
-            const users = [];
+        function checkAccess() {
+            const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+            const adminSession = localStorage.getItem('adminLoggedIn');
             
-            // بررسی همه کلیدهای localStorage
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                
-                if (key.includes('sodmax') || key.includes('SOD') || key.includes('user')) {
-                    try {
-                        const data = JSON.parse(localStorage.getItem(key));
-                        
-                        // اگر داده کاربر پیدا شد
-                        if (data && (data.fullName || data.email || data.sodBalance !== undefined)) {
-                            users.push({
-                                fullName: data.fullName || 'کاربر ناشناس',
-                                email: data.email || 'ندارد',
-                                sodBalance: data.sodBalance || 0,
-                                usdtBalance: data.usdtBalance || 0,
-                                totalMined: data.totalMined || data.sodBalance || 0,
-                                userLevel: data.userLevel || 1,
-                                lastUpdated: new Date().toLocaleDateString('fa-IR')
-                            });
-                        }
-                    } catch(e) {
-                        // خطا در parse - بی‌خیال
-                    }
-                }
-            }
-            
-            if (users.length > 0) {
-                displayUsers(users);
-                showMessage(`✅ ${users.length} کاربر از حافظه محلی بارگذاری شد`, 'success');
-            } else {
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('usersTable').style.display = 'none';
-                showMessage('⚠️ هیچ کاربری در حافظه محلی پیدا نشد. اول در بازی ثبت نام کنید.', 'error');
-            }
-        }
-        
-        // نمایش کاربران در جدول
-        function displayUsers(users) {
-            const tableBody = document.getElementById('usersTableBody');
-            const loading = document.getElementById('loading');
-            const emptyState = document.getElementById('emptyState');
-            const table = document.getElementById('usersTable');
-            
-            loading.style.display = 'none';
-            emptyState.style.display = 'none';
-            
-            if (users.length === 0) {
-                emptyState.style.display = 'block';
-                table.style.display = 'none';
-                updateStats([]);
+            if (userData.email === ADMIN_SETTINGS.allowedEmail && adminSession === 'true') {
+                showAdminPanel();
                 return;
             }
             
+            if (userData.email === ADMIN_SETTINGS.allowedEmail) {
+                document.getElementById('adminLogin').style.display = 'flex';
+                document.getElementById('adminEmail').value = userData.email;
+                return;
+            }
+            
+            document.getElementById('accessDenied').style.display = 'flex';
+        }
+        
+        function checkAdminLogin() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (email === ADMIN_SETTINGS.allowedEmail && password === ADMIN_SETTINGS.password) {
+                localStorage.setItem('adminLoggedIn', 'true');
+                localStorage.setItem('adminLoginTime', new Date().getTime());
+                showAdminPanel();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('loginError').style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        function showAdminPanel() {
+            document.getElementById('accessDenied').style.display = 'none';
+            document.getElementById('adminLogin').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            loadAdminData();
+        }
+        
+        function loadAdminData() {
+            const users = [
+                { name: "علی محمدی", email: "ali@test.com", sod: 12500000, usdt: 0.0125, level: 3, date: "۱۴۰۲/۱۲/۱۵" },
+                { name: "فاطمه کریمی", email: "fatemeh@test.com", sod: 8500000, usdt: 0.0085, level: 2, date: "۱۴۰۲/۱۲/۱۴" },
+                { name: "محمد رضایی", email: "mohammad@test.com", sod: 21000000, usdt: 0.0210, level: 4, date: "۱۴۰۲/۱۲/۱۶" }
+            ];
+            
+            document.getElementById('activeUsers').textContent = users.length;
+            
+            let totalMined = 0;
+            let totalUSDT = 0;
+            
+            users.forEach(user => {
+                totalMined += user.sod;
+                totalUSDT += user.usdt;
+            });
+            
+            document.getElementById('totalMined').textContent = formatNumber(totalMined) + ' SOD';
+            document.getElementById('totalUSDT').textContent = totalUSDT.toFixed(4) + ' USDT';
+            
             let html = '';
-            users.forEach((user, index) => {
+            users.forEach(user => {
                 html += `
                     <tr>
-                        <td>${index + 1}</td>
-                        <td><strong>${user.fullName}</strong></td>
+                        <td>${user.name}</td>
                         <td>${user.email}</td>
-                        <td><span style="color: #0066FF; font-weight: bold;">${formatNumber(user.sodBalance)}</span></td>
-                        <td><span style="color: #00D4AA; font-weight: bold;">${user.usdtBalance.toFixed(4)}</span></td>
-                        <td>${formatNumber(user.totalMined)}</td>
-                        <td><span style="background: #FF6B35; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px;">سطح ${user.userLevel}</span></td>
-                        <td><small>${user.lastUpdated}</small></td>
+                        <td><strong>${formatNumber(user.sod)}</strong></td>
+                        <td>${user.usdt.toFixed(4)}</td>
+                        <td><span style="background: #0066FF; padding: 5px 12px; border-radius: 12px;">${user.level}</span></td>
+                        <td>${user.date}</td>
                     </tr>
                 `;
             });
             
-            tableBody.innerHTML = html;
-            table.style.display = 'table';
-            updateStats(users);
-            
-            // فعال کردن جستجو
-            setupSearch();
+            document.getElementById('usersList').innerHTML = html;
         }
         
-        // آپدیت آمار
-        function updateStats(users) {
-            let totalMined = 0;
-            let totalUSDT = 0;
-            let totalLevel = 0;
-            
-            users.forEach(user => {
-                totalMined += user.totalMined || 0;
-                totalUSDT += user.usdtBalance || 0;
-                totalLevel += user.userLevel || 1;
-            });
-            
-            document.getElementById('totalUsers').textContent = users.length;
-            document.getElementById('totalMined').textContent = formatNumber(totalMined) + ' SOD';
-            document.getElementById('totalUSDT').textContent = totalUSDT.toFixed(4) + ' USDT';
-            document.getElementById('avgLevel').textContent = users.length > 0 ? (totalLevel / users.length).toFixed(1) : '0';
+        function adminLogout() {
+            localStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('adminLoginTime');
+            location.reload();
         }
         
-        // تنظیم جستجو
-        function setupSearch() {
-            const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                const rows = document.querySelectorAll('#usersTableBody tr');
-                let visibleCount = 0;
-                
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    if (text.includes(searchTerm)) {
-                        row.style.display = '';
-                        visibleCount++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-                
-                // اگر همه ردیف‌ها مخفی شدند
-                if (visibleCount === 0 && searchTerm.length > 0) {
-                    document.getElementById('emptyState').style.display = 'block';
-                    document.getElementById('usersTable').style.display = 'none';
-                } else {
-                    document.getElementById('emptyState').style.display = 'none';
-                    document.getElementById('usersTable').style.display = 'table';
-                }
-            });
-        }
-        
-        // نمایش پیام
-        function showMessage(text, type = 'info') {
-            const messageEl = document.getElementById('message');
-            messageEl.textContent = text;
-            messageEl.className = 'message ' + type;
-            messageEl.style.display = 'block';
-            
-            setTimeout(() => {
-                messageEl.style.display = 'none';
-            }, 5000);
-        }
-        
-        // فرمت اعداد
         function formatNumber(num) {
-            if (num >= 1000000000) return (num / 1000000000).toFixed(2) + 'B';
             if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
             if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-            return num.toLocaleString('fa-IR');
+            return num.toString();
         }
         
-        // بارگذاری اولیه
-        window.addEventListener('DOMContentLoaded', function() {
-            // بعد از 2 ثانیه خودکار دمو رو نشون بده
-            setTimeout(() => {
-                loadDemoUsers();
-            }, 2000);
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAccess();
             
-            // یا اگر localStorage کاربر داره
-            setTimeout(() => {
-                checkLocalStorage();
-            }, 1000);
+            setInterval(() => {
+                const loginTime = localStorage.getItem('adminLoginTime');
+                if (loginTime) {
+                    const currentTime = new Date().getTime();
+                    const diffMinutes = (currentTime - parseInt(loginTime)) / (1000 * 60);
+                    
+                    if (diffMinutes > ADMIN_SETTINGS.autoLogoutMinutes) {
+                        adminLogout();
+                    }
+                }
+            }, 60000);
         });
-        
-        // دکمه بازگشت به بازی
-        function goToGame() {
-            window.location.href = window.location.origin;
-        }
     </script>
 </body>
 </html>
