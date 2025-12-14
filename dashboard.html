@@ -82,6 +82,10 @@
                     <span>موجودی USDT:</span>
                     <span id="usdtBalance">۰</span>
                 </div>
+                <div class="stat">
+                    <span>تاریخ ثبت‌نام:</span>
+                    <span id="registerDate">-</span>
+                </div>
             </div>
             
             <div class="card">
@@ -128,19 +132,45 @@
     </div>
 
     <script>
+        // ==================== سیستم مدیریت ادمین ====================
+        
+        // تشخیص ادمین و نمایش لینک مدیریت
+        function checkAdminAccess() {
+            try {
+                const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+                if (userData.email === "hamyarhf@gmail.com") {
+                    document.getElementById('adminLink').style.display = 'flex';
+                    console.log('✅ دسترسی ادمین فعال شد');
+                }
+            } catch (e) {
+                console.log('⚠️ خطا در تشخیص ادمین:', e);
+            }
+        }
+
+        // ==================== تابع‌های اصلی ====================
+        
         // بارگذاری اطلاعات کاربر
         function loadUserData() {
             try {
+                // اول سینک ساختار داده‌ها
+                syncDataStructures();
+                
                 // اطلاعات از localStorage
                 const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
                 const gameData = JSON.parse(localStorage.getItem('sodmaxGameData') || '{}');
                 
+                // اگر کاربر لاگین نکرده، برگرد به صفحه اصلی
+                if (!userData.email) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
                 // تولید کد دعوت
-                const inviteCode = 'INVITE-' + (Math.random().toString(36).substr(2, 6).toUpperCase());
+                const inviteCode = 'INVITE-' + (userData.email.substring(0, 4).toUpperCase()) + (Math.random().toString(36).substr(2, 4).toUpperCase());
                 document.getElementById('inviteCode').textContent = inviteCode;
                 
                 // ساخت لینک دعوت
-                const inviteLink = window.location.origin + '/?ref=' + inviteCode;
+                const inviteLink = window.location.origin + '/index.html?ref=' + inviteCode;
                 document.getElementById('inviteLink').value = inviteLink;
                 
                 // آپدیت اطلاعات
@@ -149,6 +179,7 @@
                 document.getElementById('totalMined').textContent = formatNumber(gameData.totalMined || 0) + ' SOD';
                 document.getElementById('sodBalance').textContent = formatNumber(gameData.sodBalance || 0);
                 document.getElementById('usdtBalance').textContent = (gameData.usdtBalance || 0).toFixed(4);
+                document.getElementById('registerDate').textContent = userData.registerDate || '-';
                 
                 // محاسبه پیشرفت سطح
                 const currentLevel = gameData.userLevel || 1;
@@ -166,9 +197,10 @@
                 
                 // تاریخچه فعالیت
                 const activities = [
-                    { text: "🎉 ثبت نام در سیستم", time: "همین الان" },
+                    { text: "🎉 ثبت نام در سیستم", time: userData.registerDate || "امروز" },
                     { text: "⛏️ شروع استخراج", time: "۲ دقیقه پیش" },
-                    { text: "💰 دریافت پاداش اولیه", time: "۵ دقیقه پیش" }
+                    { text: "💰 دریافت پاداش اولیه", time: "۵ دقیقه پیش" },
+                    { text: `📈 ${formatNumber(gameData.todayEarnings || 0)} SOD استخراج امروز`, time: "آخرین بروزرسانی" }
                 ];
                 
                 const activityHtml = activities.map(act => `
@@ -186,10 +218,33 @@
             }
         }
         
+        // سینک ساختار داده‌ها
+        function syncDataStructures() {
+            try {
+                const oldUserData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+                if (oldUserData.email) {
+                    // اگر ساختار قدیم وجود دارد و ساختار جدید ندارد
+                    const newKey = 'sodmaxUser_' + oldUserData.email;
+                    if (!localStorage.getItem(newKey)) {
+                        localStorage.setItem(newKey, JSON.stringify(oldUserData));
+                        
+                        // همچنین اطلاعات بازی را هم سینک کن
+                        const oldGameData = JSON.parse(localStorage.getItem('sodmaxGameData') || '{}');
+                        localStorage.setItem('sodmaxGame_' + oldUserData.email, JSON.stringify(oldGameData));
+                        
+                        console.log('🔄 داده‌ها در داشبورد سینک شدند');
+                    }
+                }
+            } catch (e) {
+                console.log('⚠️ خطا در سینک داده‌ها:', e);
+            }
+        }
+        
         // کپی لینک دعوت
         function copyInviteLink() {
             const linkInput = document.getElementById('inviteLink');
             linkInput.select();
+            linkInput.setSelectionRange(0, 99999); // برای موبایل
             document.execCommand('copy');
             
             // نمایش پیام موفقیت
@@ -197,6 +252,9 @@
             const originalText = btn.textContent;
             btn.textContent = '✅ کپی شد!';
             btn.style.background = '#00D4AA';
+            
+            // نمایش نوتیفیکیشن
+            alert('لینک دعوت کپی شد!');
             
             setTimeout(() => {
                 btn.textContent = originalText;
@@ -222,19 +280,7 @@
             window.location.href = 'index.html';
         }
         
-        // ==================== سیستم مدیریت ====================
-        
-        // تشخیص ادمین و نمایش لینک مدیریت
-        function checkAdminAccess() {
-            try {
-                const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
-                if (userData.email === "hamyarhf@gmail.com") {
-                    document.getElementById('adminLink').style.display = 'flex';
-                }
-            } catch (e) {
-                console.log('⚠️ خطا در تشخیص ادمین:', e);
-            }
-        }
+        // ==================== راه‌اندازی ====================
         
         // بارگذاری اولیه
         window.addEventListener('DOMContentLoaded', function() {
