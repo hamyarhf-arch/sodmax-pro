@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لیدربرد - SODmAX Pro</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0a0f1c 0%, #121828 100%); color: white; min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo { font-size: 24px; font-weight: bold; background: linear-gradient(135deg, #0066FF, #00D4AA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        nav a { color: #94A3B8; text-decoration: none; margin-right: 20px; transition: 0.3s; }
+        nav a:hover { color: #0066FF; }
+        .btn { background: #0066FF; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        
+        .leaderboard-header { text-align: center; margin: 40px 0; }
+        .leaderboard-header h1 { font-size: 36px; margin-bottom: 10px; background: linear-gradient(135deg, #0066FF, #00D4AA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .leaderboard-header p { color: #94A3B8; font-size: 18px; }
+        
+        .time-tabs { display: flex; justify-content: center; gap: 10px; margin: 30px 0; }
+        .time-tab { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px 30px; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+        .time-tab.active { background: #0066FF; border-color: #0066FF; }
+        .time-tab:hover { background: rgba(0,102,255,0.3); }
+        
+        .top-three { display: flex; justify-content: center; align-items: flex-end; gap: 30px; margin: 50px 0; }
+        .top-card { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 30px; text-align: center; border: 2px solid transparent; }
+        .top-card:nth-child(1) { border-color: gold; transform: scale(1.1); }
+        .top-card:nth-child(2) { border-color: silver; }
+        .top-card:nth-child(3) { border-color: #cd7f32; }
+        .rank-icon { font-size: 48px; margin-bottom: 10px; }
+        .rank-1 .rank-icon { color: gold; }
+        .rank-2 .rank-icon { color: silver; }
+        .rank-3 .rank-icon { color: #cd7f32; }
+        
+        .leaderboard-table { background: rgba(255,255,255,0.05); border-radius: 15px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(0,102,255,0.3); padding: 20px; text-align: right; }
+        td { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        tr:hover { background: rgba(0,102,255,0.1); }
+        .user-rank { font-size: 20px; font-weight: bold; }
+        .user-name { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, #0066FF, #00D4AA); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .reward-badge { background: linear-gradient(135deg, #FF6B35, #FFD166); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        
+        @media (max-width: 768px) {
+            .top-three { flex-direction: column; align-items: center; }
+            .top-card { width: 100%; max-width: 300px; }
+            .time-tabs { flex-wrap: wrap; }
+            table { font-size: 14px; }
+            th, td { padding: 12px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">SODmAX Leaderboard</div>
+            <nav>
+                <a href="/">بازی اصلی</a>
+                <a href="/dashboard.html">داشبورد</a>
+                <a href="/missions.html">مأموریت‌ها</a>
+                <button class="btn" onclick="goToGame()">بازگشت به بازی</button>
+            </nav>
+        </header>
+        
+        <div class="leaderboard-header">
+            <h1>🏆 لیدربرد SODmAX</h1>
+            <p>برترین استخراج‌کنندگان امروز را ببینید و رقابت کنید!</p>
+        </div>
+        
+        <div class="time-tabs">
+            <div class="time-tab active" onclick="changeTimeFrame('daily')">📅 روزانه</div>
+            <div class="time-tab" onclick="changeTimeFrame('weekly')">📆 هفتگی</div>
+            <div class="time-tab" onclick="changeTimeFrame('monthly')">📊 ماهانه</div>
+        </div>
+        
+        <div class="top-three">
+            <div class="top-card rank-1">
+                <div class="rank-icon">🥇</div>
+                <h3>نفر اول</h3>
+                <div style="font-size: 24px; font-weight: bold; margin: 10px 0;" id="top1Name">در حال بارگذاری...</div>
+                <div style="color: #00D4AA; font-size: 20px;" id="top1Score">۰ SOD</div>
+                <div class="reward-badge" style="margin-top: 10px;">جایزه: ۰.۰۱ USDT</div>
+            </div>
+            
+            <div class="top-card rank-2">
+                <div class="rank-icon">🥈</div>
+                <h3>نفر دوم</h3>
+                <div style="font-size: 20px; font-weight: bold; margin: 10px 0;" id="top2Name">در حال بارگذاری...</div>
+                <div style="color: #94A3B8; font-size: 18px;" id="top2Score">۰ SOD</div>
+                <div class="reward-badge" style="margin-top: 10px; background: linear-gradient(135deg, #94A3B8, #CBD5E1);">جایزه: ۰.۰۰۵ USDT</div>
+            </div>
+            
+            <div class="top-card rank-3">
+                <div class="rank-icon">🥉</div>
+                <h3>نفر سوم</h3>
+                <div style="font-size: 18px; font-weight: bold; margin: 10px 0;" id="top3Name">در حال بارگذاری...</div>
+                <div style="color: #FF6B35; font-size: 16px;" id="top3Score">۰ SOD</div>
+                <div class="reward-badge" style="margin-top: 10px; background: linear-gradient(135deg, #FF6B35, #FFD166);">جایزه: ۰.۰۰۲ USDT</div>
+            </div>
+        </div>
+        
+        <div class="leaderboard-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>رتبه</th>
+                        <th>کاربر</th>
+                        <th>استخراج امروز</th>
+                        <th>استخراج کل</th>
+                        <th>سطح</th>
+                        <th>پاداش</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <!-- داده‌های لیدربرد اینجا نمایش داده می‌شود -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="text-align: center; margin: 40px 0; color: #94A3B8;">
+            <p>⏰ رتبه‌بندی هر ۱ ساعت به‌روزرسانی می‌شود</p>
+            <p>🎁 جوایز هر شب ساعت ۲۴ پرداخت می‌شوند</p>
+        </div>
+    </div>
+
+    <script>
+        // داده‌های نمونه لیدربرد
+        const leaderboardData = {
+            daily: [
+                { rank: 1, name: "علی محمدی", avatar: "AM", today: 1250000, total: 12500000, level: 5, reward: "۰.۰۱ USDT" },
+                { rank: 2, name: "فاطمه کریمی", avatar: "FK", today: 980000, total: 9800000, level: 4, reward: "۰.۰۰۵ USDT" },
+                { rank: 3, name: "محمد رضایی", avatar: "MR", today: 850000, total: 8500000, level: 4, reward: "۰.۰۰۲ USDT" },
+                { rank: 4, name: "سارا احمدی", avatar: "SA", today: 720000, total: 7200000, level: 3, reward: "۱۰۰K SOD" },
+                { rank: 5, name: "حسین نظری", avatar: "HN", today: 650000, total: 6500000, level: 3, reward: "۵۰K SOD" },
+                { rank: 6, name: "زهرا جعفری", avatar: "ZJ", today: 580000, total: 5800000, level: 3, reward: "۲۵K SOD" },
+                { rank: 7, name: "رضا محمودی", avatar: "RM", today: 510000, total: 5100000, level: 2, reward: "۱۰K SOD" },
+                { rank: 8, name: "مریم حسینی", avatar: "MH", today: 450000, total: 4500000, level: 2, reward: "۵K SOD" },
+                { rank: 9, name: "امیر عباسی", avatar: "AA", today: 390000, total: 3900000, level: 2, reward: "۲K SOD" },
+                { rank: 10, name: "نازنین قاسمی", avatar: "NG", today: 320000, total: 3200000, level: 1, reward: "۱K SOD" }
+            ],
+            weekly: [
+                { rank: 1, name: "علی محمدی", avatar: "AM", today: 8500000, total: 85000000, level: 5, reward: "۰.۰۵ USDT" },
+                { rank: 2, name: "فاطمه کریمی", avatar: "FK", today: 7200000, total: 72000000, level: 5, reward: "۰.۰۲ USDT" },
+                { rank: 3, name: "محمد رضایی", avatar: "MR", today: 6500000, total: 65000000, level: 4, reward: "۰.۰۱ USDT" }
+            ],
+            monthly: [
+                { rank: 1, name: "علی محمدی", avatar: "AM", today: 35000000, total: 350000000, level: 7, reward: "۰.۱ USDT" },
+                { rank: 2, name: "فاطمه کریمی", avatar: "FK", today: 28000000, total: 280000000, level: 6, reward: "۰.۰۵ USDT" },
+                { rank: 3, name: "محمد رضایی", avatar: "MR", today: 22000000, total: 220000000, level: 6, reward: "۰.۰۲ USDT" }
+            ]
+        };
+        
+        // تغییر بازه زمانی
+        function changeTimeFrame(timeFrame) {
+            // آپدیت تب‌های فعال
+            document.querySelectorAll('.time-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // آپدیت داده‌ها
+            loadLeaderboardData(timeFrame);
+        }
+        
+        // بارگذاری داده‌های لیدربرد
+        function loadLeaderboardData(timeFrame = 'daily') {
+            const data = leaderboardData[timeFrame];
+            
+            // آپدیت سه نفر برتر
+            if (data[0]) {
+                document.getElementById('top1Name').textContent = data[0].name;
+                document.getElementById('top1Score').textContent = formatNumber(data[0].today) + ' SOD';
+            }
+            if (data[1]) {
+                document.getElementById('top2Name').textContent = data[1].name;
+                document.getElementById('top2Score').textContent = formatNumber(data[1].today) + ' SOD';
+            }
+            if (data[2]) {
+                document.getElementById('top3Name').textContent = data[2].name;
+                document.getElementById('top3Score').textContent = formatNumber(data[2].today) + ' SOD';
+            }
+            
+            // آپدیت جدول
+            const tableBody = document.getElementById('leaderboardBody');
+            let html = '';
+            
+            data.forEach(user => {
+                const rankClass = user.rank <= 3 ? 'rank-' + user.rank : '';
+                const rankIcon = user.rank === 1 ? '🥇' : user.rank === 2 ? '🥈' : user.rank === 3 ? '🥉' : user.rank;
+                
+                html += `
+                    <tr>
+                        <td><span class="user-rank ${rankClass}">${rankIcon}</span></td>
+                        <td>
+                            <div class="user-name">
+                                <div class="user-avatar">${user.avatar}</div>
+                                <span>${user.name}</span>
+                            </div>
+                        </td>
+                        <td><strong>${formatNumber(user.today)} SOD</strong></td>
+                        <td>${formatNumber(user.total)} SOD</td>
+                        <td><span style="background: #0066FF; padding: 5px 12px; border-radius: 12px;">${user.level}</span></td>
+                        <td><span class="reward-badge">${user.reward}</span></td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+            
+            // اضافه کردن کاربر فعلی اگر در لیست نیست
+            addCurrentUserRow();
+        }
+        
+        // اضافه کردن ردیف کاربر فعلی
+        function addCurrentUserRow() {
+            try {
+                const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+                const gameData = JSON.parse(localStorage.getItem('sodmaxGameData') || '{}');
+                
+                if (userData.fullName) {
+                    const todayEarnings = gameData.todayEarnings || 0;
+                    const totalMined = gameData.totalMined || 0;
+                    const userLevel = gameData.userLevel || 1;
+                    
+                    const currentUserRow = `
+                        <tr style="background: rgba(0,212,170,0.1);">
+                            <td><span style="color: #00D4AA;">شما</span></td>
+                            <td>
+                                <div class="user-name">
+                                    <div class="user-avatar" style="background: linear-gradient(135deg, #00D4AA, #0066FF);">${userData.fullName.charAt(0)}</div>
+                                    <span>${userData.fullName} (شما)</span>
+                                </div>
+                            </td>
+                            <td><strong style="color: #00D4AA;">${formatNumber(todayEarnings)} SOD</strong></td>
+                            <td>${formatNumber(totalMined)} SOD</td>
+                            <td><span style="background: #00D4AA; padding: 5px 12px; border-radius: 12px;">${userLevel}</span></td>
+                            <td><span class="reward-badge" style="background: linear-gradient(135deg, #00D4AA, #0066FF);">در حال رقابت</span></td>
+                        </tr>
+                    `;
+                    
+                    document.getElementById('leaderboardBody').innerHTML += currentUserRow;
+                }
+            } catch (error) {
+                console.error('خطا در افزودن کاربر فعلی:', error);
+            }
+        }
+        
+        // فرمت اعداد
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+        
+        // بازگشت به بازی
+        function goToGame() {
+            window.location.href = '/';
+        }
+        
+        // بارگذاری اولیه
+        window.addEventListener('DOMContentLoaded', function() {
+            loadLeaderboardData('daily');
+            
+            // شبیه‌سازی به‌روزرسانی خودکار
+            setInterval(() => {
+                console.log('لیدربرد به‌روزرسانی شد');
+                loadLeaderboardData('daily');
+            }, 60000); // هر ۱ دقیقه
+        });
+    </script>
+</body>
+</html>
