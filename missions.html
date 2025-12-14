@@ -133,6 +133,22 @@
     </div>
 
     <script>
+        // ==================== سیستم مدیریت ادمین ====================
+        
+        // تشخیص ادمین و نمایش لینک مدیریت
+        function checkAdminAccess() {
+            try {
+                const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+                if (userData.email === "hamyarhf@gmail.com") {
+                    document.getElementById('adminLink').style.display = 'flex';
+                }
+            } catch (e) {
+                console.log('⚠️ خطا در تشخیص ادمین:', e);
+            }
+        }
+
+        // ==================== داده‌های مأموریت‌ها ====================
+        
         // داده‌های مأموریت‌ها
         const missionsData = [
             {
@@ -159,17 +175,6 @@
             },
             {
                 id: 3,
-                title: "دعوت‌کننده",
-                icon: "👥",
-                description: "یک دوست را به بازی دعوت کنید",
-                type: "referral",
-                target: 1,
-                current: 0,
-                reward: { type: "USDT", amount: 0.005 },
-                status: "active"
-            },
-            {
-                id: 4,
                 title: "حرفه‌ای",
                 icon: "⭐",
                 description: "به سطح ۳ برسید",
@@ -180,7 +185,7 @@
                 status: "active"
             },
             {
-                id: 5,
+                id: 4,
                 title: "استخراج‌کننده طلایی",
                 icon: "💰",
                 description: "۱,۰۰۰,۰۰۰ SOD استخراج کنید",
@@ -188,6 +193,17 @@
                 target: 1000000,
                 current: 0,
                 reward: { type: "USDT", amount: 0.01 },
+                status: "active"
+            },
+            {
+                id: 5,
+                title: "کاربر فعال",
+                icon: "🔥",
+                description: "۵ مأموریت را در یک روز کامل کنید",
+                type: "missions",
+                target: 5,
+                current: 0,
+                reward: { type: "USDT", amount: 0.05 },
                 status: "active"
             }
         ];
@@ -271,6 +287,12 @@
                 const gameData = JSON.parse(localStorage.getItem('sodmaxGameData') || '{}');
                 const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
                 
+                // اگر کاربر لاگین نکرده، برو به صفحه اصلی
+                if (!userData.email) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
                 // مأموریت ۱: اولین کلیک
                 if (gameData.sodBalance > 0) {
                     missionsData[0].current = 1;
@@ -279,17 +301,53 @@
                 // مأموریت ۲: ۱۰۰ کلیک
                 missionsData[1].current = Math.min(gameData.todayEarnings || 0, 100);
                 
-                // مأموریت ۳: دعوت دوست (شبیه‌سازی)
-                missionsData[2].current = 0; // بعداً از localStorage بخوان
+                // مأموریت ۳: سطح ۳
+                missionsData[2].current = gameData.userLevel || 1;
                 
-                // مأموریت ۴: سطح ۳
-                missionsData[3].current = gameData.userLevel || 1;
+                // مأموریت ۴: ۱M SOD استخراج
+                missionsData[3].current = gameData.totalMined || 0;
                 
-                // مأموریت ۵: ۱M SOD استخراج
-                missionsData[4].current = gameData.totalMined || 0;
+                // مأموریت ۵: ۵ مأموریت
+                const completedMissions = missionsData.filter(m => m.current >= m.target).length;
+                missionsData[4].current = completedMissions;
+                
+                // ذخیره پیشرفت مأموریت‌ها
+                saveMissionsProgress();
                 
             } catch (error) {
                 console.error('خطا در آپدیت پیشرفت مأموریت‌ها:', error);
+            }
+        }
+        
+        // ذخیره پیشرفت مأموریت‌ها
+        function saveMissionsProgress() {
+            try {
+                const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+                if (userData.email) {
+                    localStorage.setItem('sodmaxMissions_' + userData.email, JSON.stringify(missionsData));
+                }
+            } catch (e) {
+                console.log('⚠️ خطا در ذخیره پیشرفت مأموریت‌ها:', e);
+            }
+        }
+        
+        // بارگذاری پیشرفت مأموریت‌ها
+        function loadMissionsProgress() {
+            try {
+                const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+                if (userData.email) {
+                    const savedMissions = localStorage.getItem('sodmaxMissions_' + userData.email);
+                    if (savedMissions) {
+                        const loadedMissions = JSON.parse(savedMissions);
+                        loadedMissions.forEach((loadedMission, index) => {
+                            if (missionsData[index]) {
+                                missionsData[index].current = loadedMission.current || 0;
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('⚠️ خطا در بارگذاری پیشرفت مأموریت‌ها:', e);
             }
         }
         
@@ -298,7 +356,28 @@
             const mission = missionsData.find(m => m.id === missionId);
             if (!mission || mission.current < mission.target) return;
             
-            // شبیه‌سازی دریافت پاداش
+            // دریافت پاداش در بازی
+            const gameData = JSON.parse(localStorage.getItem('sodmaxGameData') || '{}');
+            const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+            
+            if (mission.reward.type === 'SOD') {
+                gameData.sodBalance = (gameData.sodBalance || 0) + mission.reward.amount;
+                gameData.totalMined = (gameData.totalMined || 0) + mission.reward.amount;
+            } else {
+                gameData.usdtBalance = (gameData.usdtBalance || 0) + mission.reward.amount;
+            }
+            
+            // ذخیره بازی
+            localStorage.setItem('sodmaxGameData', JSON.stringify(gameData));
+            
+            // همچنین در ساختار جدید ذخیره کن
+            if (userData.email) {
+                localStorage.setItem('sodmaxGame_' + userData.email, JSON.stringify(gameData));
+            }
+            
+            // علامت گذاری مأموریت به عنوان دریافت شده
+            mission.status = "claimed";
+            
             const rewardText = mission.reward.type === 'SOD' 
                 ? `${formatNumber(mission.reward.amount)} SOD`
                 : `${mission.reward.amount} USDT`;
@@ -343,22 +422,18 @@
             window.location.href = 'index.html';
         }
         
-        // ==================== سیستم مدیریت ====================
-        
-        // تشخیص ادمین و نمایش لینک مدیریت
-        function checkAdminAccess() {
-            try {
-                const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
-                if (userData.email === "hamyarhf@gmail.com") {
-                    document.getElementById('adminLink').style.display = 'flex';
-                }
-            } catch (e) {
-                console.log('⚠️ خطا در تشخیص ادمین:', e);
-            }
-        }
+        // ==================== راه‌اندازی ====================
         
         // بارگذاری اولیه
         window.addEventListener('DOMContentLoaded', function() {
+            // بررسی لاگین
+            const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+            if (!userData.email) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            loadMissionsProgress();
             loadMissions();
             checkAdminAccess();
             
