@@ -66,9 +66,14 @@
         <header>
             <div class="logo">SODmAX Missions</div>
             <nav>
-                <a href="/">بازی اصلی</a>
-                <a href="/dashboard.html">داشبورد</a>
-                <a href="/leaderboard.html">لیدربرد</a>
+                <a href="index.html">بازی اصلی</a>
+                <a href="dashboard.html">داشبورد</a>
+                <a href="leaderboard.html">لیدربرد</a>
+                <!-- لینک مدیریت -->
+                <a href="admin.html" id="adminLink" style="display: none; background: rgba(148,163,184,0.3); padding: 6px 12px; border-radius: 6px;">
+                    <i class="fas fa-user-shield"></i>
+                    مدیریت
+                </a>
                 <button class="btn" onclick="goToGame()">بازگشت به بازی</button>
             </nav>
         </header>
@@ -335,12 +340,27 @@
         
         // بازگشت به بازی
         function goToGame() {
-            window.location.href = '/';
+            window.location.href = 'index.html';
+        }
+        
+        // ==================== سیستم مدیریت ====================
+        
+        // تشخیص ادمین و نمایش لینک مدیریت
+        function checkAdminAccess() {
+            try {
+                const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+                if (userData.email === "hamyarhf@gmail.com") {
+                    document.getElementById('adminLink').style.display = 'flex';
+                }
+            } catch (e) {
+                console.log('⚠️ خطا در تشخیص ادمین:', e);
+            }
         }
         
         // بارگذاری اولیه
         window.addEventListener('DOMContentLoaded', function() {
             loadMissions();
+            checkAdminAccess();
             
             // آپدیت تایمر هر دقیقه
             setInterval(updateResetTimer, 60000);
