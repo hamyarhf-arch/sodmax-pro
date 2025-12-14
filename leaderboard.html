@@ -57,9 +57,14 @@
         <header>
             <div class="logo">SODmAX Leaderboard</div>
             <nav>
-                <a href="/">بازی اصلی</a>
-                <a href="/dashboard.html">داشبورد</a>
-                <a href="/missions.html">مأموریت‌ها</a>
+                <a href="index.html">بازی اصلی</a>
+                <a href="dashboard.html">داشبورد</a>
+                <a href="missions.html">مأموریت‌ها</a>
+                <!-- لینک مدیریت -->
+                <a href="admin.html" id="adminLink" style="display: none; background: rgba(148,163,184,0.3); padding: 6px 12px; border-radius: 6px;">
+                    <i class="fas fa-user-shield"></i>
+                    مدیریت
+                </a>
                 <button class="btn" onclick="goToGame()">بازگشت به بازی</button>
             </nav>
         </header>
@@ -126,31 +131,164 @@
     </div>
 
     <script>
+        // ==================== سیستم مدیریت ادمین ====================
+        
+        // تشخیص ادمین و نمایش لینک مدیریت
+        function checkAdminAccess() {
+            try {
+                const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+                if (userData.email === "hamyarhf@gmail.com") {
+                    document.getElementById('adminLink').style.display = 'flex';
+                }
+            } catch (e) {
+                console.log('⚠️ خطا در تشخیص ادمین:', e);
+            }
+        }
+
+        // ==================== داده‌های لیدربرد ====================
+        
         // داده‌های نمونه لیدربرد
         const leaderboardData = {
-            daily: [
-                { rank: 1, name: "علی محمدی", avatar: "AM", today: 1250000, total: 12500000, level: 5, reward: "۰.۰۱ USDT" },
-                { rank: 2, name: "فاطمه کریمی", avatar: "FK", today: 980000, total: 9800000, level: 4, reward: "۰.۰۰۵ USDT" },
-                { rank: 3, name: "محمد رضایی", avatar: "MR", today: 850000, total: 8500000, level: 4, reward: "۰.۰۰۲ USDT" },
-                { rank: 4, name: "سارا احمدی", avatar: "SA", today: 720000, total: 7200000, level: 3, reward: "۱۰۰K SOD" },
-                { rank: 5, name: "حسین نظری", avatar: "HN", today: 650000, total: 6500000, level: 3, reward: "۵۰K SOD" },
-                { rank: 6, name: "زهرا جعفری", avatar: "ZJ", today: 580000, total: 5800000, level: 3, reward: "۲۵K SOD" },
-                { rank: 7, name: "رضا محمودی", avatar: "RM", today: 510000, total: 5100000, level: 2, reward: "۱۰K SOD" },
-                { rank: 8, name: "مریم حسینی", avatar: "MH", today: 450000, total: 4500000, level: 2, reward: "۵K SOD" },
-                { rank: 9, name: "امیر عباسی", avatar: "AA", today: 390000, total: 3900000, level: 2, reward: "۲K SOD" },
-                { rank: 10, name: "نازنین قاسمی", avatar: "NG", today: 320000, total: 3200000, level: 1, reward: "۱K SOD" }
-            ],
-            weekly: [
-                { rank: 1, name: "علی محمدی", avatar: "AM", today: 8500000, total: 85000000, level: 5, reward: "۰.۰۵ USDT" },
-                { rank: 2, name: "فاطمه کریمی", avatar: "FK", today: 7200000, total: 72000000, level: 5, reward: "۰.۰۲ USDT" },
-                { rank: 3, name: "محمد رضایی", avatar: "MR", today: 6500000, total: 65000000, level: 4, reward: "۰.۰۱ USDT" }
-            ],
-            monthly: [
-                { rank: 1, name: "علی محمدی", avatar: "AM", today: 35000000, total: 350000000, level: 7, reward: "۰.۱ USDT" },
-                { rank: 2, name: "فاطمه کریمی", avatar: "FK", today: 28000000, total: 280000000, level: 6, reward: "۰.۰۵ USDT" },
-                { rank: 3, name: "محمد رضایی", avatar: "MR", today: 22000000, total: 220000000, level: 6, reward: "۰.۰۲ USDT" }
-            ]
+            daily: [],
+            weekly: [],
+            monthly: []
         };
+        
+        // بارگذاری داده‌های واقعی از localStorage
+        function loadRealLeaderboardData() {
+            const users = getAllUsers();
+            
+            // مرتب‌سازی بر اساس استخراج امروز
+            const dailySorted = [...users].sort((a, b) => (b.todayEarnings || 0) - (a.todayEarnings || 0));
+            const weeklySorted = [...users].sort((a, b) => (b.totalMined || 0) - (a.totalMined || 0));
+            const monthlySorted = [...users].sort((a, b) => (b.totalMined || 0) - (a.totalMined || 0));
+            
+            // تبدیل به فرمت لیدربرد
+            leaderboardData.daily = dailySorted.slice(0, 10).map((user, index) => ({
+                rank: index + 1,
+                name: user.fullName,
+                avatar: user.fullName ? user.fullName.charAt(0) : 'U',
+                today: user.todayEarnings || 0,
+                total: user.totalMined || 0,
+                level: user.userLevel || 1,
+                reward: getRewardForRank(index + 1),
+                email: user.email
+            }));
+            
+            leaderboardData.weekly = weeklySorted.slice(0, 10).map((user, index) => ({
+                rank: index + 1,
+                name: user.fullName,
+                avatar: user.fullName ? user.fullName.charAt(0) : 'U',
+                today: user.totalMined || 0,
+                total: user.totalMined || 0,
+                level: user.userLevel || 1,
+                reward: getWeeklyRewardForRank(index + 1),
+                email: user.email
+            }));
+            
+            leaderboardData.monthly = monthlySorted.slice(0, 10).map((user, index) => ({
+                rank: index + 1,
+                name: user.fullName,
+                avatar: user.fullName ? user.fullName.charAt(0) : 'U',
+                today: user.totalMined || 0,
+                total: user.totalMined || 0,
+                level: user.userLevel || 1,
+                reward: getMonthlyRewardForRank(index + 1),
+                email: user.email
+            }));
+            
+            // اگر داده‌ای نبود، نمونه اضافه کن
+            if (leaderboardData.daily.length === 0) {
+                leaderboardData.daily = [
+                    { rank: 1, name: "علی محمدی", avatar: "AM", today: 1250000, total: 12500000, level: 5, reward: "۰.۰۱ USDT", email: "sample@example.com" },
+                    { rank: 2, name: "فاطمه کریمی", avatar: "FK", today: 980000, total: 9800000, level: 4, reward: "۰.۰۰۵ USDT", email: "sample2@example.com" },
+                    { rank: 3, name: "محمد رضایی", avatar: "MR", today: 850000, total: 8500000, level: 4, reward: "۰.۰۰۲ USDT", email: "sample3@example.com" }
+                ];
+            }
+        }
+        
+        // دریافت تمام کاربران از localStorage
+        function getAllUsers() {
+            const users = [];
+            
+            // ساختار جدید
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                
+                if (key.startsWith('sodmaxUser_')) {
+                    try {
+                        const userEmail = key.replace('sodmaxUser_', '');
+                        const userData = JSON.parse(localStorage.getItem(key));
+                        
+                        if (userData && userData.email) {
+                            const gameKey = 'sodmaxGame_' + userEmail;
+                            const gameData = JSON.parse(localStorage.getItem(gameKey)) || {};
+                            
+                            users.push({
+                                fullName: userData.fullName || 'کاربر ناشناس',
+                                email: userData.email,
+                                sodBalance: gameData.sodBalance || 0,
+                                usdtBalance: gameData.usdtBalance || 0,
+                                userLevel: gameData.userLevel || 1,
+                                totalMined: gameData.totalMined || 0,
+                                todayEarnings: gameData.todayEarnings || 0,
+                                registerDate: userData.registerDate || new Date().toLocaleDateString('fa-IR')
+                            });
+                        }
+                    } catch (e) {
+                        console.log('خطا در خواندن کاربر:', e);
+                    }
+                }
+            }
+            
+            // ساختار قدیم
+            const oldUserData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
+            if (oldUserData.email && !users.find(u => u.email === oldUserData.email)) {
+                const oldGameData = JSON.parse(localStorage.getItem('sodmaxGameData') || '{}');
+                users.push({
+                    fullName: oldUserData.fullName || 'کاربر قدیمی',
+                    email: oldUserData.email,
+                    sodBalance: oldGameData.sodBalance || 0,
+                    usdtBalance: oldGameData.usdtBalance || 0,
+                    userLevel: oldGameData.userLevel || 1,
+                    totalMined: oldGameData.totalMined || 0,
+                    todayEarnings: oldGameData.todayEarnings || 0,
+                    registerDate: oldUserData.registerDate || 'تاریخ نامشخص'
+                });
+            }
+            
+            return users;
+        }
+        
+        // دریافت پاداش بر اساس رتبه
+        function getRewardForRank(rank) {
+            switch(rank) {
+                case 1: return "۰.۰۱ USDT";
+                case 2: return "۰.۰۰۵ USDT";
+                case 3: return "۰.۰۰۲ USDT";
+                case 4: return "۱۰۰K SOD";
+                case 5: return "۵۰K SOD";
+                default: return "۱۰K SOD";
+            }
+        }
+        
+        function getWeeklyRewardForRank(rank) {
+            switch(rank) {
+                case 1: return "۰.۰۵ USDT";
+                case 2: return "۰.۰۲ USDT";
+                case 3: return "۰.۰۱ USDT";
+                default: return "۵۰K SOD";
+            }
+        }
+        
+        function getMonthlyRewardForRank(rank) {
+            switch(rank) {
+                case 1: return "۰.۱ USDT";
+                case 2: return "۰.۰۵ USDT";
+                case 3: return "۰.۰۲ USDT";
+                default: return "۱۰۰K SOD";
+            }
+        }
         
         // تغییر بازه زمانی
         function changeTimeFrame(timeFrame) {
@@ -166,6 +304,7 @@
         
         // بارگذاری داده‌های لیدربرد
         function loadLeaderboardData(timeFrame = 'daily') {
+            loadRealLeaderboardData(); // اول داده‌های واقعی را بارگذاری کن
             const data = leaderboardData[timeFrame];
             
             // آپدیت سه نفر برتر
@@ -210,37 +349,43 @@
             tableBody.innerHTML = html;
             
             // اضافه کردن کاربر فعلی اگر در لیست نیست
-            addCurrentUserRow();
+            addCurrentUserRow(timeFrame);
         }
         
         // اضافه کردن ردیف کاربر فعلی
-        function addCurrentUserRow() {
+        function addCurrentUserRow(timeFrame) {
             try {
                 const userData = JSON.parse(localStorage.getItem('sodmaxUserData') || '{}');
                 const gameData = JSON.parse(localStorage.getItem('sodmaxGameData') || '{}');
                 
                 if (userData.fullName) {
-                    const todayEarnings = gameData.todayEarnings || 0;
-                    const totalMined = gameData.totalMined || 0;
+                    let todayEarnings = gameData.todayEarnings || 0;
+                    let totalMined = gameData.totalMined || 0;
                     const userLevel = gameData.userLevel || 1;
                     
-                    const currentUserRow = `
-                        <tr style="background: rgba(0,212,170,0.1);">
-                            <td><span style="color: #00D4AA;">شما</span></td>
-                            <td>
-                                <div class="user-name">
-                                    <div class="user-avatar" style="background: linear-gradient(135deg, #00D4AA, #0066FF);">${userData.fullName.charAt(0)}</div>
-                                    <span>${userData.fullName} (شما)</span>
-                                </div>
-                            </td>
-                            <td><strong style="color: #00D4AA;">${formatNumber(todayEarnings)} SOD</strong></td>
-                            <td>${formatNumber(totalMined)} SOD</td>
-                            <td><span style="background: #00D4AA; padding: 5px 12px; border-radius: 12px;">${userLevel}</span></td>
-                            <td><span class="reward-badge" style="background: linear-gradient(135deg, #00D4AA, #0066FF);">در حال رقابت</span></td>
-                        </tr>
-                    `;
+                    // اگر در حال حاضر در لیست هست، نمایش نده
+                    const currentUsers = leaderboardData[timeFrame];
+                    const isInList = currentUsers.some(user => user.email === userData.email);
                     
-                    document.getElementById('leaderboardBody').innerHTML += currentUserRow;
+                    if (!isInList) {
+                        const currentUserRow = `
+                            <tr style="background: rgba(0,212,170,0.1);">
+                                <td><span style="color: #00D4AA;">شما</span></td>
+                                <td>
+                                    <div class="user-name">
+                                        <div class="user-avatar" style="background: linear-gradient(135deg, #00D4AA, #0066FF);">${userData.fullName.charAt(0)}</div>
+                                        <span>${userData.fullName} (شما)</span>
+                                    </div>
+                                </td>
+                                <td><strong style="color: #00D4AA;">${formatNumber(todayEarnings)} SOD</strong></td>
+                                <td>${formatNumber(totalMined)} SOD</td>
+                                <td><span style="background: #00D4AA; padding: 5px 12px; border-radius: 12px;">${userLevel}</span></td>
+                                <td><span class="reward-badge" style="background: linear-gradient(135deg, #00D4AA, #0066FF);">در حال رقابت</span></td>
+                            </tr>
+                        `;
+                        
+                        document.getElementById('leaderboardBody').innerHTML += currentUserRow;
+                    }
                 }
             } catch (error) {
                 console.error('خطا در افزودن کاربر فعلی:', error);
@@ -256,12 +401,15 @@
         
         // بازگشت به بازی
         function goToGame() {
-            window.location.href = '/';
+            window.location.href = 'index.html';
         }
+        
+        // ==================== راه‌اندازی ====================
         
         // بارگذاری اولیه
         window.addEventListener('DOMContentLoaded', function() {
             loadLeaderboardData('daily');
+            checkAdminAccess();
             
             // شبیه‌سازی به‌روزرسانی خودکار
             setInterval(() => {
