@@ -2251,34 +2251,8 @@ window.debugSODmAX = function() {
     
     console.log(`🎯 تعداد کلیدهای SODmAX: ${sodmaxKeys.length}`);
     
-    // نمایش دکمه تست در صفحه
-    if (!document.getElementById('debugBtn')) {
-        const debugBtn = document.createElement('button');
-        debugBtn.id = 'debugBtn';
-        debugBtn.textContent = '🐛 تست ذخیره‌سازی';
-        debugBtn.style.position = 'fixed';
-        debugBtn.style.bottom = '20px';
-        debugBtn.style.left = '20px';
-        debugBtn.style.zIndex = '9999';
-        debugBtn.style.padding = '10px 20px';
-        debugBtn.style.background = '#FFD700';
-        debugBtn.style.color = 'black';
-        debugBtn.style.border = 'none';
-        debugBtn.style.borderRadius = '10px';
-        debugBtn.style.cursor = 'pointer';
-        debugBtn.style.fontWeight = 'bold';
-        debugBtn.onclick = window.debugSODmAX;
-        document.body.appendChild(debugBtn);
-    }
-    
-    alert('نتایج در کنسول (F12) نمایش داده می‌شود');
-};
-
-// فعال کردن دیباگ
-setTimeout(() => {
-    window.debugSODmAX();
-}, 5000);
     </script>
 </body>
 </html>
+
 
