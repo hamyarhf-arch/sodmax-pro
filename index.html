@@ -1371,19 +1371,92 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ثبت‌نام...';
             
             try {
-                // 1. ثبت‌نام در احراز هویت
+                // 1. بررسی تکراری نبودن ایمیل
+                const { data: existingUser, error: checkError } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('email', email)
+                    .maybeSingle();
+                
+                if (existingUser) {
+                    // اگر کاربر وجود دارد، مستقیم وارد شو
+                    showNotification('ℹ️ کاربر موجود', 'در حال ورود به حساب موجود...');
+                    
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+                    
+                    if (error) {
+                        if (error.message.includes('Invalid login credentials')) {
+                            showNotification('⚠️ مشکل ورود', 
+                                'این ایمیل قبلاً ثبت شده اما رمز عبور اشتباه است. لطفاً وارد شوید.'
+                            );
+                            showLogin();
+                            document.getElementById('loginEmail').value = email;
+                        } else {
+                            throw error;
+                        }
+                    } else {
+                        showNotification('✅ ورود موفق', 'به حساب موجود خود وارد شدید!');
+                        setTimeout(() => window.location.reload(), 1500);
+                    }
+                    
+                    return;
+                }
+                
+                // 2. ثبت‌نام در احراز هویت
                 const { data: authData, error: authError } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
-                        data: { full_name: fullName }
+                        data: { 
+                            full_name: fullName,
+                            email_verified: true // برای تست مستقیم
+                        }
                     }
                 });
                 
-                if (authError) throw authError;
+                if (authError) {
+                    // اگر کاربر در Authentication وجود دارد
+                    if (authError.message.includes('already registered')) {
+                        showNotification('⚠️ کاربر موجود', 'در حال ورود به حساب موجود...');
+                        
+                        // مستقیم وارد شو
+                        const { data, error } = await supabase.auth.signInWithPassword({
+                            email,
+                            password
+                        });
+                        
+                        if (error) {
+                            showNotification('❌ خطا', 'ایمیل یا رمز عبور اشتباه است');
+                            showLogin();
+                            document.getElementById('loginEmail').value = email;
+                        } else {
+                            showNotification('✅ ورود موفق', 'به حساب موجود خود وارد شدید!');
+                            setTimeout(() => window.location.reload(), 1500);
+                        }
+                        return;
+                    }
+                    throw authError;
+                }
                 
-                // 2. ذخیره در جدول users
-                const referralCode = generateReferralCode();
+                // 3. تولید کد ارجاع منحصر به فرد
+                let referralCode;
+                let isUnique = false;
+                
+                while (!isUnique) {
+                    referralCode = 'REF' + Math.random().toString(36).substr(2, 8).toUpperCase();
+                    const { data: existingCode } = await supabase
+                        .from('users')
+                        .select('id')
+                        .eq('referral_code', referralCode)
+                        .maybeSingle();
+                    
+                    if (!existingCode) isUnique = true;
+                }
+                
+                // 4. ذخیره در جدول users
                 const { error: userError } = await supabase
                     .from('users')
                     .insert({
@@ -1391,43 +1464,80 @@
                         email: email,
                         full_name: fullName,
                         referral_code: referralCode,
-                        is_admin: email === 'hamyarhf@gmail.com'
+                        is_admin: email === 'hamyarhf@gmail.com',
+                        email_verified: true
                     });
                 
                 if (userError) throw userError;
                 
-                // 3. ایجاد رکورد بازی
+                // 5. ایجاد رکورد بازی
                 const { error: gameError } = await supabase
                     .from('games')
                     .insert({
                         user_id: authData.user.id,
                         sod_balance: 1000000, // هدیه 1M SOD
-                        mining_power: 10
+                        mining_power: 10,
+                        user_level: 1,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
                     });
                 
-                if (gameError) throw gameError;
+                if (gameError) {
+                    // پاک‌سازی در صورت خطا
+                    await supabase.from('users').delete().eq('id', authData.user.id);
+                    throw gameError;
+                }
                 
-                // 4. ثبت تراکنش هدیه
+                // 6. ثبت تراکنش هدیه
                 await supabase
                     .from('transactions')
                     .insert({
                         user_id: authData.user.id,
                         type: 'bonus',
                         amount: 1000000,
-                        description: 'هدیه ثبت‌نام'
+                        description: 'هدیه ثبت‌نام',
+                        created_at: new Date().toISOString()
                     });
                 
                 showNotification('🎉 ثبت‌نام موفق', 
-                    `${fullName} عزیز، خوش آمدید!\n۱,۰۰۰,۰۰۰ SOD هدیه دریافت کردید.`
+                    `${fullName} عزیز، خوش آمدید!\n۱,۰۰۰,۰۰۰ SOD هدیه دریافت کردید.\n\nکد ارجاع شما: ${referralCode}`
                 );
                 
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
+                // 7. 🔥 **ورود خودکار بعد از ثبت‌نام**
+                const { error: loginError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (!loginError) {
+                    // کمی صبر کن تا همه چیز ذخیره شود
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    showNotification('🚀 ورود خودکار', 'در حال وارد شدن به بازی...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    // اگر خطا خورد، کاربر را به فرم ورود هدایت کن
+                    showNotification('⚠️ لطفاً وارد شوید', 'ثبت‌نام موفق! حالا وارد شوید.');
+                    showLogin();
+                    document.getElementById('loginEmail').value = email;
+                }
                 
             } catch (error) {
                 console.error('خطا در ثبت‌نام:', error);
-                showNotification('❌ خطا', error.message || 'خطا در ثبت‌نام');
+                
+                let errorMessage = 'خطا در ثبت‌نام';
+                if (error.message.includes('already registered')) {
+                    errorMessage = 'این ایمیل قبلاً ثبت شده است';
+                } else if (error.message.includes('password')) {
+                    errorMessage = 'رمز عبور ضعیف است (حداقل ۶ کاراکتر)';
+                } else if (error.message.includes('email')) {
+                    errorMessage = 'ایمیل معتبر نیست';
+                } else if (error.message.includes('duplicate key')) {
+                    errorMessage = 'این ایمیل قبلاً استفاده شده است';
+                }
+                
+                showNotification('❌ خطا', errorMessage);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-user-plus"></i> ثبت نام و شروع استخراج';
             }
@@ -1441,25 +1551,95 @@
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
             
+            if (!email || !password) {
+                showNotification('خطا', 'لطفاً ایمیل و رمز عبور را وارد کنید');
+                return;
+            }
+            
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ورود...';
             
             try {
+                // 1. ورود به Authentication
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password
                 });
                 
-                if (error) throw error;
+                if (error) {
+                    if (error.message.includes('Invalid login credentials')) {
+                        showNotification('❌ اطلاعات اشتباه', 'ایمیل یا رمز عبور اشتباه است');
+                    } else if (error.message.includes('Email not confirmed')) {
+                        // برای تست، بدون تایید ایمیل وارد شو
+                        showNotification('⚠️ ایمیل تایید نشده', 'در حال ورود...');
+                        
+                        // در Supabase باید Confirm email خاموش باشد
+                        // برای تست، دوباره سعی کن
+                        const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+                            email,
+                            password
+                        });
+                        
+                        if (retryError) throw retryError;
+                        data = retryData;
+                    } else {
+                        throw error;
+                    }
+                    return;
+                }
                 
-                showNotification('✅ ورود موفق', `خوش آمدید ${data.user.email}`);
+                // 2. بررسی وجود کاربر در جدول users
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .select('id, full_name')
+                    .eq('email', email)
+                    .maybeSingle();
+                
+                // 3. اگر کاربر در جدول users نیست، ایجاد کن
+                if (!userData && !userError) {
+                    const referralCode = 'REF' + Math.random().toString(36).substr(2, 8).toUpperCase();
+                    
+                    await supabase
+                        .from('users')
+                        .insert({
+                            id: data.user.id,
+                            email: email,
+                            full_name: 'کاربر جدید',
+                            referral_code: referralCode,
+                            is_admin: email === 'hamyarhf@gmail.com',
+                            email_verified: true
+                        });
+                    
+                    // ایجاد رکورد بازی
+                    await supabase
+                        .from('games')
+                        .insert({
+                            user_id: data.user.id,
+                            sod_balance: 1000000,
+                            mining_power: 10,
+                            user_level: 1
+                        });
+                    
+                    // ثبت تراکنش هدیه
+                    await supabase
+                        .from('transactions')
+                        .insert({
+                            user_id: data.user.id,
+                            type: 'bonus',
+                            amount: 1000000,
+                            description: 'هدیه ورود اول'
+                        });
+                }
+                
+                showNotification('✅ ورود موفق', 'در حال بارگذاری بازی...');
                 
                 setTimeout(() => {
                     window.location.reload();
                 }, 1500);
                 
             } catch (error) {
-                showNotification('❌ خطا', 'ایمیل یا رمز عبور اشتباه است');
+                console.error('خطا در ورود:', error);
+                showNotification('❌ خطا', 'خطا در ورود به سیستم');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ورود به حساب';
             }
@@ -1478,6 +1658,28 @@
                 if (!gameError && game) {
                     gameData = game;
                     updateUI();
+                } else if (gameError && gameError.code === 'PGRST116') {
+                    // اگر رکورد بازی وجود ندارد، ایجاد کن
+                    await supabase
+                        .from('games')
+                        .insert({
+                            user_id: currentUser.id,
+                            sod_balance: 1000000,
+                            mining_power: 10,
+                            user_level: 1
+                        });
+                    
+                    // دوباره بارگذاری کن
+                    const { data: newGame } = await supabase
+                        .from('games')
+                        .select('*')
+                        .eq('user_id', currentUser.id)
+                        .single();
+                    
+                    if (newGame) {
+                        gameData = newGame;
+                        updateUI();
+                    }
                 }
                 
                 // دریافت تراکنش‌های اخیر
@@ -1498,7 +1700,17 @@
             try {
                 await supabase
                     .from('games')
-                    .update(gameData)
+                    .update({
+                        sod_balance: gameData.sod_balance,
+                        usdt_balance: gameData.usdt_balance,
+                        mining_power: gameData.mining_power,
+                        user_level: gameData.user_level,
+                        total_mined: gameData.total_mined,
+                        today_earnings: gameData.today_earnings,
+                        usdt_progress: gameData.usdt_progress,
+                        transactions: gameData.transactions,
+                        updated_at: new Date().toISOString()
+                    })
                     .eq('user_id', currentUser.id);
                 
                 // همچنین آپدیت جدول users
@@ -1508,7 +1720,8 @@
                         sod_balance: gameData.sod_balance,
                         usdt_balance: gameData.usdt_balance,
                         user_level: gameData.user_level,
-                        total_mined: gameData.total_mined
+                        total_mined: gameData.total_mined,
+                        updated_at: new Date().toISOString()
                     })
                     .eq('id', currentUser.id);
                 
@@ -1561,7 +1774,8 @@
                         user_id: currentUser.id,
                         type: type,
                         amount: amount,
-                        description: description
+                        description: description,
+                        created_at: new Date().toISOString()
                     });
                 
                 // اضافه به تاریخچه محلی
@@ -1942,15 +2156,6 @@
             if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
             if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
             return Math.floor(num).toLocaleString('fa-IR');
-        }
-
-        function generateReferralCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < 8; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return `REF${code}`;
         }
 
         function createMiningEffect(amount) {
