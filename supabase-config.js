@@ -3,7 +3,7 @@
 
 export const SUPABASE_CONFIG = {
   URL: 'https://zoqsgvgbmxrkemcwxwus.supabase.co',
-  ANON_KEY: zoqsgvgbmxrkemcwxwus
+  ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvcXNndmdibXhya2VtY3d4d3VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODc5NTAsImV4cCI6MjA4MTM2Mzk1MH0.Nj2xXSphPHXROxaVf_hYw_iqFgnXU1r-GzFHMet9YMk
 };
 
 // نحوه دریافت کلید:
