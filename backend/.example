@@ -1,0 +1,43 @@
+# ============================================
+# SODmAX Pro Backend - Environment Variables
+# ============================================
+
+# Server
+PORT=5000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/sodmax_pro
+
+# JWT Authentication
+JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+JWT_EXPIRE=7d
+
+# Admin
+ADMIN_EMAIL=hamyarhf@gmail.com
+ADMIN_PASSWORD=123456
+
+# Game Settings
+EXCHANGE_RATE=10000000
+BASE_MINING_POWER=10
+BOOST_MULTIPLIER=3
+BOOST_DURATION_MINUTES=30
+BOOST_COST=5000
+PANEL_1_PRICE=1
+PANEL_2_PRICE=5
+PANEL_3_PRICE=15
+PANEL_4_PRICE=50
+
+# Email (اختیاری)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+EMAIL_FROM=noreply@sodmax.com
+
+# Redis Cache (اختیاری)
+REDIS_URL=redis://localhost:6379
+
+# Logging
+LOG_LEVEL=info
