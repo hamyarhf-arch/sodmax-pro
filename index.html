@@ -1315,20 +1315,28 @@
         };
         let autoMiningInterval = null;
         let isAutoMining = false;
+        let autoSaveInterval = null;
 
         // ==================== رویدادهای صفحه ====================
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('صفحه بارگذاری شد');
+            
             // بررسی اگر کاربر وارد شده
             const { data: { user } } = await supabase.auth.getUser();
             
             if (user) {
+                console.log('کاربر وارد شده:', user.email);
                 currentUser = user;
                 await loadUserData();
                 showMainApp();
                 checkAdminAccess();
                 loadSalePlans();
                 updateNetworkStats();
+                
+                // شروع ذخیره خودکار
+                startAutoSave();
             } else {
+                console.log('کاربر وارد نشده، نمایش فرم ثبت‌نام');
                 showRegisterForm();
             }
             
@@ -1339,8 +1347,8 @@
             // رویداد کلیک ماینر
             document.getElementById('minerCore').addEventListener('click', handleMining);
             
-            // ذخیره خودکار هر 30 ثانیه
-            setInterval(saveGameData, 30000);
+            // رویدادهای ذخیره خودکار
+            setupAutoSaveEvents();
             
             // آپدیت آمار شبکه هر 60 ثانیه
             setInterval(updateNetworkStats, 60000);
@@ -1412,17 +1420,15 @@
                     options: {
                         data: { 
                             full_name: fullName,
-                            email_verified: true // برای تست مستقیم
+                            email_verified: true
                         }
                     }
                 });
                 
                 if (authError) {
-                    // اگر کاربر در Authentication وجود دارد
                     if (authError.message.includes('already registered')) {
                         showNotification('⚠️ کاربر موجود', 'در حال ورود به حساب موجود...');
                         
-                        // مستقیم وارد شو
                         const { data, error } = await supabase.auth.signInWithPassword({
                             email,
                             password
@@ -1441,7 +1447,7 @@
                     throw authError;
                 }
                 
-                // 3. تولید کد ارجاع منحصر به فرد
+                // 3. تولید کد ارجاع
                 let referralCode;
                 let isUnique = false;
                 
@@ -1470,20 +1476,26 @@
                 
                 if (userError) throw userError;
                 
-                // 5. ایجاد رکورد بازی
+                // 5. ایجاد رکورد بازی در جدول games
+                const gameDataToSave = {
+                    user_id: authData.user.id,
+                    sod_balance: 1000000,
+                    mining_power: 10,
+                    user_level: 1,
+                    total_mined: 0,
+                    today_earnings: 0,
+                    usdt_progress: 0,
+                    usdt_balance: 0,
+                    last_active: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
                 const { error: gameError } = await supabase
                     .from('games')
-                    .insert({
-                        user_id: authData.user.id,
-                        sod_balance: 1000000, // هدیه 1M SOD
-                        mining_power: 10,
-                        user_level: 1,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    });
+                    .insert([gameDataToSave]);
                 
                 if (gameError) {
-                    // پاک‌سازی در صورت خطا
                     await supabase.from('users').delete().eq('id', authData.user.id);
                     throw gameError;
                 }
@@ -1496,6 +1508,7 @@
                         type: 'bonus',
                         amount: 1000000,
                         description: 'هدیه ثبت‌نام',
+                        status: 'completed',
                         created_at: new Date().toISOString()
                     });
                 
@@ -1503,21 +1516,19 @@
                     `${fullName} عزیز، خوش آمدید!\n۱,۰۰۰,۰۰۰ SOD هدیه دریافت کردید.\n\nکد ارجاع شما: ${referralCode}`
                 );
                 
-                // 7. 🔥 **ورود خودکار بعد از ثبت‌نام**
+                // 7. ورود خودکار
                 const { error: loginError } = await supabase.auth.signInWithPassword({
                     email,
                     password
                 });
                 
                 if (!loginError) {
-                    // کمی صبر کن تا همه چیز ذخیره شود
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     showNotification('🚀 ورود خودکار', 'در حال وارد شدن به بازی...');
                     setTimeout(() => {
                         window.location.reload();
                     }, 1500);
                 } else {
-                    // اگر خطا خورد، کاربر را به فرم ورود هدایت کن
                     showNotification('⚠️ لطفاً وارد شوید', 'ثبت‌نام موفق! حالا وارد شوید.');
                     showLogin();
                     document.getElementById('loginEmail').value = email;
@@ -1560,7 +1571,6 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ورود...';
             
             try {
-                // 1. ورود به Authentication
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password
@@ -1570,32 +1580,28 @@
                     if (error.message.includes('Invalid login credentials')) {
                         showNotification('❌ اطلاعات اشتباه', 'ایمیل یا رمز عبور اشتباه است');
                     } else if (error.message.includes('Email not confirmed')) {
-                        // برای تست، بدون تایید ایمیل وارد شو
                         showNotification('⚠️ ایمیل تایید نشده', 'در حال ورود...');
                         
-                        // در Supabase باید Confirm email خاموش باشد
-                        // برای تست، دوباره سعی کن
                         const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
                             email,
                             password
                         });
                         
                         if (retryError) throw retryError;
-                        data = retryData;
                     } else {
                         throw error;
                     }
                     return;
                 }
                 
-                // 2. بررسی وجود کاربر در جدول users
+                // بررسی وجود کاربر در جدول users
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .select('id, full_name')
                     .eq('email', email)
                     .maybeSingle();
                 
-                // 3. اگر کاربر در جدول users نیست، ایجاد کن
+                // اگر کاربر در جدول users نیست، ایجاد کن
                 if (!userData && !userError) {
                     const referralCode = 'REF' + Math.random().toString(36).substr(2, 8).toUpperCase();
                     
@@ -1617,7 +1623,12 @@
                             user_id: data.user.id,
                             sod_balance: 1000000,
                             mining_power: 10,
-                            user_level: 1
+                            user_level: 1,
+                            total_mined: 0,
+                            today_earnings: 0,
+                            usdt_progress: 0,
+                            usdt_balance: 0,
+                            last_active: new Date().toISOString()
                         });
                     
                     // ثبت تراکنش هدیه
@@ -1627,7 +1638,8 @@
                             user_id: data.user.id,
                             type: 'bonus',
                             amount: 1000000,
-                            description: 'هدیه ورود اول'
+                            description: 'هدیه ورود اول',
+                            status: 'completed'
                         });
                 }
                 
@@ -1645,89 +1657,338 @@
             }
         }
 
-        // بارگذاری اطلاعات کاربر
+        // بارگذاری اطلاعات کاربر - تابع اصلاح شده
         async function loadUserData() {
             try {
-                // دریافت اطلاعات بازی
-                const { data: game, error: gameError } = await supabase
+                console.log('بارگذاری اطلاعات کاربر شروع شد...');
+                
+                // 1. دریافت اطلاعات کاربر
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .select('full_name, referral_code, is_admin')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (userError && userError.code !== 'PGRST116') {
+                    console.error('خطا در بارگذاری کاربر:', userError);
+                }
+                
+                // 2. دریافت اطلاعات بازی از جدول games
+                const { data: gameDataDB, error: gameError } = await supabase
                     .from('games')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .single();
                 
-                if (!gameError && game) {
-                    gameData = game;
-                    updateUI();
-                } else if (gameError && gameError.code === 'PGRST116') {
+                if (gameError) {
                     // اگر رکورد بازی وجود ندارد، ایجاد کن
-                    await supabase
-                        .from('games')
-                        .insert({
+                    if (gameError.code === 'PGRST116') {
+                        console.log('ایجاد رکورد جدید بازی برای کاربر...');
+                        
+                        const initialData = {
                             user_id: currentUser.id,
                             sod_balance: 1000000,
                             mining_power: 10,
-                            user_level: 1
-                        });
+                            user_level: 1,
+                            total_mined: 0,
+                            today_earnings: 0,
+                            usdt_progress: 0,
+                            usdt_balance: 0,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            last_active: new Date().toISOString()
+                        };
+                        
+                        const { data: newGame, error: insertError } = await supabase
+                            .from('games')
+                            .insert([initialData])
+                            .select()
+                            .single();
+                        
+                        if (insertError) {
+                            console.error('خطا در ایجاد بازی:', insertError);
+                            
+                            // ذخیره در localStorage به عنوان بک‌آپ
+                            localStorage.setItem(`game_temp_${currentUser.id}`, JSON.stringify(initialData));
+                            
+                            // استفاده از داده‌های موقت
+                            gameData = initialData;
+                        } else {
+                            gameData = newGame;
+                        }
+                        
+                        // ثبت تراکنش هدیه
+                        try {
+                            await supabase
+                                .from('transactions')
+                                .insert({
+                                    user_id: currentUser.id,
+                                    type: 'bonus',
+                                    amount: 1000000,
+                                    description: 'هدیه ثبت‌نام',
+                                    status: 'completed',
+                                    created_at: new Date().toISOString()
+                                });
+                        } catch (txError) {
+                            console.error('خطا در ثبت تراکنش هدیه:', txError);
+                        }
+                        
+                        showNotification('🎁 هدیه شروع', '۱,۰۰۰,۰۰۰ SOD هدیه دریافت کردید!');
+                        
+                    } else {
+                        console.error('خطا در بارگذاری بازی:', gameError);
+                        
+                        // تلاش برای بازیابی از localStorage
+                        await restoreFromBackup();
+                    }
+                } else {
+                    // اگر بازی وجود دارد، اطلاعات را بارگذاری کن
+                    console.log('بازی موجود بارگذاری شد:', gameDataDB);
                     
-                    // دوباره بارگذاری کن
-                    const { data: newGame } = await supabase
-                        .from('games')
-                        .select('*')
-                        .eq('user_id', currentUser.id)
-                        .single();
+                    gameData = {
+                        sod_balance: gameDataDB.sod_balance || 0,
+                        usdt_balance: parseFloat(gameDataDB.usdt_balance) || 0,
+                        mining_power: gameDataDB.mining_power || 10,
+                        user_level: gameDataDB.user_level || 1,
+                        total_mined: gameDataDB.total_mined || 0,
+                        today_earnings: gameDataDB.today_earnings || 0,
+                        usdt_progress: gameDataDB.usdt_progress || 0,
+                        id: gameDataDB.id,
+                        user_id: currentUser.id
+                    };
                     
-                    if (newGame) {
-                        gameData = newGame;
-                        updateUI();
+                    // ریست earnings روزانه اگر تاریخ تغییر کرده
+                    if (gameDataDB.last_active) {
+                        const lastActive = new Date(gameDataDB.last_active);
+                        const now = new Date();
+                        if (lastActive.toDateString() !== now.toDateString()) {
+                            console.log('ریست درآمد روزانه');
+                            gameData.today_earnings = 0;
+                            await saveGameData();
+                        }
                     }
                 }
                 
-                // دریافت تراکنش‌های اخیر
+                // 3. بازیابی از بک‌آپ localStorage
+                await restoreFromBackup();
+                
+                // 4. بازیابی تراکنش‌های معلق
+                await restorePendingTransactions();
+                
+                // 5. بارگذاری تراکنش‌ها
                 await loadRecentTransactions();
                 
-                // دریافت مأموریت‌ها
-                await loadMissions();
+                // 6. آپدیت UI
+                updateUI();
+                
+                // 7. آپدیت زمان آخرین فعالیت
+                try {
+                    await supabase
+                        .from('games')
+                        .update({ 
+                            last_active: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('user_id', currentUser.id);
+                } catch (error) {
+                    console.error('خطا در آپدیت last_active:', error);
+                }
+                
+                console.log('بارگذاری اطلاعات کامل شد:', gameData);
                 
             } catch (error) {
-                console.error('خطا در بارگذاری اطلاعات:', error);
+                console.error('خطای بحرانی در بارگذاری:', error);
+                showNotification('⚠️ خطا', 'خطا در بارگذاری اطلاعات بازی');
             }
         }
 
-        // ذخیره اطلاعات بازی
-        async function saveGameData() {
-            if (!currentUser) return;
-            
+        // تابع بازیابی از بک‌آپ localStorage
+        async function restoreFromBackup() {
             try {
-                await supabase
-                    .from('games')
-                    .update({
-                        sod_balance: gameData.sod_balance,
-                        usdt_balance: gameData.usdt_balance,
-                        mining_power: gameData.mining_power,
-                        user_level: gameData.user_level,
-                        total_mined: gameData.total_mined,
-                        today_earnings: gameData.today_earnings,
-                        usdt_progress: gameData.usdt_progress,
-                        transactions: gameData.transactions,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('user_id', currentUser.id);
+                // بررسی بک‌آپ اصلی
+                const backupKey = `game_backup_${currentUser.id}`;
+                const backup = localStorage.getItem(backupKey);
                 
-                // همچنین آپدیت جدول users
-                await supabase
-                    .from('users')
-                    .update({
-                        sod_balance: gameData.sod_balance,
-                        usdt_balance: gameData.usdt_balance,
-                        user_level: gameData.user_level,
-                        total_mined: gameData.total_mined,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', currentUser.id);
+                // بررسی داده‌های موقت
+                const tempKey = `game_temp_${currentUser.id}`;
+                const temp = localStorage.getItem(tempKey);
+                
+                let backupData = null;
+                
+                // اولویت با بک‌آپ اصلی
+                if (backup) {
+                    backupData = JSON.parse(backup);
+                    console.log('بک‌آپ اصلی یافت شد:', backupData);
+                } 
+                // اگر بک‌آپ اصلی نبود، از موقت استفاده کن
+                else if (temp) {
+                    backupData = JSON.parse(temp);
+                    console.log('داده‌های موقت یافت شد:', backupData);
+                }
+                
+                if (backupData && backupData.sod_balance !== undefined) {
+                    console.log('بازیابی داده‌ها از بک‌آپ...');
+                    
+                    // ترکیب با داده‌های فعلی (بک‌آپ اولویت دارد)
+                    gameData = {
+                        ...gameData,
+                        sod_balance: Math.max(gameData.sod_balance, backupData.sod_balance || 0),
+                        usdt_balance: Math.max(gameData.usdt_balance, backupData.usdt_balance || 0),
+                        total_mined: Math.max(gameData.total_mined || 0, backupData.total_mined || 0),
+                        today_earnings: backupData.today_earnings || gameData.today_earnings,
+                        usdt_progress: backupData.usdt_progress || gameData.usdt_progress
+                    };
+                    
+                    // سعی کن در Supabase ذخیره کنی
+                    await saveGameData();
+                    
+                    // پاک کردن بک‌آپ‌ها بعد از بازیابی موفق
+                    localStorage.removeItem(backupKey);
+                    localStorage.removeItem(tempKey);
+                    
+                    console.log('داده‌ها از بک‌آپ بازیابی و ذخیره شدند');
+                    return true;
+                }
+                
+                return false;
                 
             } catch (error) {
-                console.error('خطا در ذخیره بازی:', error);
+                console.error('خطا در بازیابی از بک‌آپ:', error);
+                return false;
             }
+        }
+
+        // ذخیره اطلاعات بازی - تابع اصلاح شده
+        async function saveGameData() {
+            if (!currentUser) {
+                console.log('ذخیره: کاربر لاگین نیست');
+                return;
+            }
+            
+            try {
+                console.log('شروع ذخیره اطلاعات بازی...', gameData);
+                
+                // آماده کردن داده‌ها برای ذخیره
+                const updateData = {
+                    sod_balance: gameData.sod_balance || 0,
+                    usdt_balance: gameData.usdt_balance || 0,
+                    mining_power: gameData.mining_power || 10,
+                    user_level: gameData.user_level || 1,
+                    total_mined: gameData.total_mined || 0,
+                    today_earnings: gameData.today_earnings || 0,
+                    usdt_progress: gameData.usdt_progress || 0,
+                    last_active: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                // استفاده از upsert (ایجاد یا آپدیت)
+                const { data, error } = await supabase
+                    .from('games')
+                    .upsert({
+                        user_id: currentUser.id,
+                        ...updateData
+                    }, {
+                        onConflict: 'user_id'
+                    })
+                    .select()
+                    .single();
+                
+                if (error) {
+                    console.error('خطا در ذخیره بازی:', error);
+                    
+                    // ذخیره در localStorage به عنوان بک‌آپ
+                    const backupData = {
+                        ...gameData,
+                        last_save: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem(`game_backup_${currentUser.id}`, JSON.stringify(backupData));
+                    console.log('داده‌ها در localStorage ذخیره شدند (بک‌آپ)');
+                    
+                    // تلاش با insert اگر upsert خطا داد
+                    try {
+                        const { error: insertError } = await supabase
+                            .from('games')
+                            .insert({
+                                user_id: currentUser.id,
+                                ...updateData
+                            });
+                        
+                        if (insertError) {
+                            console.error('خطا در insert بازی:', insertError);
+                        } else {
+                            console.log('داده‌ها با insert ذخیره شدند');
+                            localStorage.removeItem(`game_backup_${currentUser.id}`);
+                        }
+                    } catch (insertError) {
+                        console.error('خطا در تلاش مجدد:', insertError);
+                    }
+                } else {
+                    console.log('اطلاعات بازی با موفقیت ذخیره شد:', data);
+                    
+                    // حذف بک‌آپ اگر ذخیره موفق بود
+                    localStorage.removeItem(`game_backup_${currentUser.id}`);
+                    localStorage.removeItem(`game_temp_${currentUser.id}`);
+                }
+                
+            } catch (error) {
+                console.error('خطای غیرمنتظره در ذخیره بازی:', error);
+                
+                // ذخیره در localStorage به عنوان بک‌آپ نهایی
+                const backupData = {
+                    ...gameData,
+                    last_save: new Date().toISOString(),
+                    error: error.message
+                };
+                
+                localStorage.setItem(`game_backup_${currentUser.id}`, JSON.stringify(backupData));
+                console.log('داده‌ها در localStorage ذخیره شدند (خطای بحرانی)');
+            }
+        }
+
+        // شروع ذخیره خودکار
+        function startAutoSave() {
+            if (autoSaveInterval) clearInterval(autoSaveInterval);
+            
+            autoSaveInterval = setInterval(async () => {
+                if (currentUser && gameData.sod_balance > 0) {
+                    console.log('ذخیره خودکار...');
+                    await saveGameData();
+                }
+            }, 15000);
+        }
+
+        // تنظیم رویدادهای ذخیره خودکار
+        function setupAutoSaveEvents() {
+            // ذخیره هنگام تعطیلی صفحه
+            window.addEventListener('beforeunload', async (e) => {
+                if (currentUser) {
+                    console.log('ذخیره قبل از بستن صفحه...');
+                    
+                    e.preventDefault();
+                    await Promise.race([
+                        saveGameData(),
+                        new Promise(resolve => setTimeout(resolve, 2000))
+                    ]);
+                }
+            });
+
+            // ذخیره هنگام تغییر Tab یا Minimize
+            document.addEventListener('visibilitychange', async () => {
+                if (document.visibilityState === 'hidden' && currentUser) {
+                    console.log('ذخیره هنگام مخفی شدن صفحه...');
+                    await saveGameData();
+                }
+            });
+
+            // ذخیره هنگام کلیک استخراج
+            document.getElementById('minerCore')?.addEventListener('click', async () => {
+                if (currentUser) {
+                    setTimeout(async () => {
+                        await saveGameData();
+                    }, 1000);
+                }
+            });
         }
 
         // مدیریت کلیک استخراج
@@ -1761,37 +2022,99 @@
             // آپدیت UI
             updateUI();
             
-            // ذخیره در دیتابیس
-            await saveGameData();
+            // ذخیره فوری
+            setTimeout(async () => {
+                await saveGameData();
+            }, 500);
         }
 
-        // ثبت تراکنش
+        // ثبت تراکنش - تابع اصلاح شده
         async function recordTransaction(type, amount, description) {
+            if (!currentUser) return false;
+            
             try {
-                await supabase
+                const txData = {
+                    user_id: currentUser.id,
+                    type: type,
+                    amount: amount,
+                    description: description,
+                    status: 'completed',
+                    created_at: new Date().toISOString()
+                };
+                
+                // ذخیره در Supabase
+                const { data, error } = await supabase
                     .from('transactions')
-                    .insert({
-                        user_id: currentUser.id,
-                        type: type,
-                        amount: amount,
-                        description: description,
-                        created_at: new Date().toISOString()
+                    .insert([txData])
+                    .select()
+                    .single();
+                
+                if (error) {
+                    console.error('خطا در ثبت تراکنش در دیتابیس:', error);
+                    
+                    // ذخیره در localStorage به عنوان بک‌آپ
+                    const pendingTx = JSON.parse(localStorage.getItem('pending_transactions') || '[]');
+                    pendingTx.push({
+                        ...txData,
+                        local_time: new Date().toLocaleString('fa-IR')
                     });
+                    localStorage.setItem('pending_transactions', JSON.stringify(pendingTx));
+                } else {
+                    console.log('تراکنش ثبت شد:', data);
+                }
                 
                 // اضافه به تاریخچه محلی
+                gameData.transactions = gameData.transactions || [];
                 gameData.transactions.unshift({
                     type,
                     amount,
                     description,
-                    time: new Date().toLocaleString('fa-IR')
+                    time: new Date().toLocaleString('fa-IR'),
+                    db_id: data?.id
                 });
                 
-                if (gameData.transactions.length > 10) {
+                if (gameData.transactions.length > 20) {
                     gameData.transactions.pop();
                 }
                 
+                return true;
+                
             } catch (error) {
                 console.error('خطا در ثبت تراکنش:', error);
+                return false;
+            }
+        }
+
+        // بازیابی تراکنش‌های معلق از localStorage
+        async function restorePendingTransactions() {
+            try {
+                const pendingTx = JSON.parse(localStorage.getItem('pending_transactions') || '[]');
+                
+                if (pendingTx.length === 0) return;
+                
+                console.log(`بازیابی ${pendingTx.length} تراکنش معلق...`);
+                
+                for (const tx of pendingTx) {
+                    try {
+                        // حذف فیلدهای اضافی
+                        const { local_time, ...txData } = tx;
+                        
+                        await supabase
+                            .from('transactions')
+                            .insert([txData]);
+                        
+                        console.log('تراکنش معلق بازیابی شد:', tx.description);
+                        
+                    } catch (error) {
+                        console.error('خطا در بازیابی تراکنش:', error);
+                    }
+                }
+                
+                // پاک کردن لیست بعد از بازیابی
+                localStorage.removeItem('pending_transactions');
+                
+            } catch (error) {
+                console.error('خطا در بازیابی تراکنش‌های معلق:', error);
             }
         }
 
@@ -2086,8 +2409,6 @@
                 const totalSOD = plan.sod_amount + (plan.sod_amount * (plan.bonus_percent / 100));
                 
                 if (confirm(`آیا مایل به خرید پنل ${plan.name} هستید؟\n\nمبلغ: ${plan.usdt_price} USDT\nدریافت: ${formatNumber(totalSOD)} SOD`)) {
-                    // در نسخه واقعی باید پرداخت انجام شود
-                    // فعلاً فقط SOD اضافه می‌کنیم
                     gameData.sod_balance += totalSOD;
                     
                     await recordTransaction('purchase', totalSOD, `خرید پنل ${plan.name}`);
@@ -2244,6 +2565,9 @@
 
         async function logout() {
             try {
+                // ذخیره قبل از خروج
+                await saveGameData();
+                
                 await supabase.auth.signOut();
                 window.location.reload();
             } catch (error) {
