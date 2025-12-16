@@ -1,6 +1,6 @@
 // supabase-config.js
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; // جایگزین کنید
-const SUPABASE_PUBLISHABLE_KEY = 'YOUR_PUBLISHABLE_KEY'; // جایگزین کنید
+const SUPABASE_URL = 'https://zoqsgvgbmxrkemcwxwus.supabase.co'; // جایگزین کنید
+const SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvcXNndmdibXhya2VtY3d4d3VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODc5NTAsImV4cCI6MjA4MTM2Mzk1MH0.Nj2xXSphPHXROxaVf_hYw_iqFgnXU1r-GzFHMet9YMk'; // جایگزین کنید
 
 // راه‌اندازی کلاینت Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
