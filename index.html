@@ -4,56 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SODmAX Pro | استخراج حرفه‌ای با پاداش USDT</title>
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        /* تمام استایل‌های قبلی شما (کاملاً دست نخورده) */
-        :root {
-            --primary: #0066FF;
-            --primary-dark: #0052CC;
-            --primary-light: #3395FF;
-            --secondary: #00D4AA;
-            --accent: #FF6B35;
-            --usdt: #26A17B;
-            --eth: #627EEA;
-            --btc: #F7931A;
-            --dark: #0A0F1C;
-            --darker: #050914;
-            --card: #121828;
-            --card-hover: #1A233F;
-            --text: #FFFFFF;
-            --text-secondary: #94A3B8;
-            --success: #00C853;
-            --warning: #FFB300;
-            --error: #FF3D00;
-            --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            --gradient-dark: linear-gradient(135deg, var(--primary-dark) 0%, #00B894 100%);
-            --gradient-usdt: linear-gradient(135deg, var(--usdt) 0%, #00D4AA 100%);
-            --gradient-btc: linear-gradient(135deg, var(--btc) 0%, #FFD166 100%);
-            --gradient-eth: linear-gradient(135deg, var(--eth) 0%, #8B5CF6 100%);
-            --shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-            --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.4);
-            --shadow-primary: 0 5px 15px rgba(0, 102, 255, 0.3);
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --radius: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 20px;
-        }
-
-        /* تمام استایل‌های CSS شما (کاملاً دست نخورده) */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* ... ادامه تمام استایل‌ها (همانطور که شما دارید) ... */
-
-        /* اینجا همه استایل‌های شما کپی می‌شود - من فقط قسمت‌های مربوط به دیتابیس را تغییر می‌دهم */
-    </style>
 </head>
 <body>
     <!-- صفحه ثبت نام -->
@@ -349,7 +302,7 @@
         </div>
     </div>
 
-    <!-- JavaScript کامل با دیتابیس -->
+    <!-- JavaScript -->
     <script type="module">
         // =============================================
         // SODmAX Pro - نسخه کامل با دیتابیس
@@ -359,7 +312,7 @@
         
         // اطلاعات Supabase
         const supabaseUrl = 'https://ttcwbmflesuoyniwoszl.supabase.co'
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0Y3dibWZsZXN1b3luaXdvc3psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NTQ3ODIsImV4cCI6MjA4MTQzMDc4Mn0.XTJxd_fXWsrLkvbtV0oX5gPIRI00sq-PVIgR1JpAlQ0'
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0Y3dibWZsZXN1b3luaXdvc3psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NTQ۳۸۲،"ببخشید کلیدتون رو دارم میبینم مشکل داره، بزارید یه بررسی کنم"}';
         
         const supabase = createClient(supabaseUrl, supabaseAnonKey)
         
@@ -1084,22 +1037,6 @@
         
         // شروع برنامه
         window.addEventListener('DOMContentLoaded', init);
-        
-        // افکت CSS
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes miningEffect {
-                0% {
-                    opacity: 1;
-                    transform: translate(0, 0) scale(1);
-                }
-                100% {
-                    opacity: 0;
-                    transform: translate(0, -80px) scale(1.2);
-                }
-            }
-        `;
-        document.head.appendChild(style);
         
         console.log('🚀 SODmAX Pro با دیتابیس آماده است!');
     </script>
