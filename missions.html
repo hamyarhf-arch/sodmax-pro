@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
+    <head>
+    <!-- خط زیر را اضافه کنید -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مأموریت‌ها - SODmAX Pro</title>
@@ -447,5 +451,15 @@
             }, 30000);
         });
     </script>
+    <!-- قبل از </body> -->
+<script src="supabase-config.js"></script>
+<script>
+    // کد ساده برای بررسی لاگین
+    async function checkLogin() {
+        const user = await SupabaseAPI.getCurrentUser();
+        if (!user) window.location.href = 'index.html';
+    }
+    checkLogin();
+</script>
 </body>
 </html>
