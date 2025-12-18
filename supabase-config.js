@@ -1,6 +1,6 @@
 const SUPABASE_URL = 'https://moattzdydyiqoftlgtmq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vYXR0emR5ZHlpcW9mdGxndG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5ODgzNTAsImV4cCI6MjA4MTU2NDM1MH0.DaTbOXcDxqx5JKZ5LbNvT-k8hYcjgbwK6nEgXz9QRy8';
-const SUPABASE_SERVICE_KEY = 'sb_secret_gy-FccDOu62q5ndPwU3S8A_LtbaQXHW';
+const SUPABASE_SERVICE_KEY = 'sb_publishable_FEd9u-5WjVTmGZ52KO9BcA_QC2QTtwb';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: true, autoRefreshToken: true }
